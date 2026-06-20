@@ -10,9 +10,9 @@ export default function LeftPanel() {
     selected, dragId, pageDragId, banners,
     accentKey, customAccent,
     activePageKey, pageElements, pageGrids,
-    cardTemplate, cardTemplateMode, cardHiddenByProduct, contentPageDragIdx,
+    cardLayouts, activeCardLayoutId, cardHiddenByProduct, cardTemplateMode, contentPageDragIdx,
     set, addDeal, addBlank, addBlankPage, removeManualPage, reorder, reorderManualPages, addFreeEl,
-    addCardTemplateEl, removeProductsInRange, moveProductRange,
+    removeProductsInRange, moveProductRange,
   } = useStore(useShallow((s) => ({
     leftTab: s.leftTab, products: s.products, manualPages: s.manualPages,
     gridKey: s.gridKey, pageSize: s.pageSize,
@@ -21,11 +21,12 @@ export default function LeftPanel() {
     banners: s.banners,
     accentKey: s.accentKey, customAccent: s.customAccent,
     activePageKey: s.activePageKey, pageElements: s.pageElements, pageGrids: s.pageGrids,
-    cardTemplate: s.cardTemplate, cardTemplateMode: s.cardTemplateMode,
-    cardHiddenByProduct: s.cardHiddenByProduct, contentPageDragIdx: s.contentPageDragIdx,
+    cardLayouts: s.cardLayouts, activeCardLayoutId: s.activeCardLayoutId,
+    cardHiddenByProduct: s.cardHiddenByProduct, cardTemplateMode: s.cardTemplateMode,
+    contentPageDragIdx: s.contentPageDragIdx,
     set: s.set, addDeal: s.addDeal, addBlank: s.addBlank, addBlankPage: s.addBlankPage,
     removeManualPage: s.removeManualPage, reorder: s.reorder, reorderManualPages: s.reorderManualPages,
-    addFreeEl: s.addFreeEl, addCardTemplateEl: s.addCardTemplateEl,
+    addFreeEl: s.addFreeEl,
     removeProductsInRange: s.removeProductsInRange, moveProductRange: s.moveProductRange,
   })))
 
@@ -61,9 +62,12 @@ export default function LeftPanel() {
   const segOn = { bg: '#fff', fg: '#211D17' }
   const segOff = { bg: 'transparent', fg: '#9A9182' }
 
+  const cardTemplate = pageElements[activeCardLayoutId] ?? []
+
   const activePageLabel =
     activePageKey === 'cover' ? 'Cover Page'
     : activePageKey.startsWith('pg-') ? `Page ${parseInt(activePageKey.slice(3)) + 2}`
+    : activePageKey.startsWith('cp-') ? 'This product\'s card'
     : (() => {
         const mp = manualPages.find((m) => m.id === activePageKey.slice(3))
         return mp ? (mp.title || 'Custom Page') : 'Custom Page'
@@ -73,22 +77,13 @@ export default function LeftPanel() {
     const fill = comp.el.fill === ACCENT_PLACEHOLDER ? accent : comp.el.fill
     const isBackground = comp.category === 'Backgrounds'
 
-    if (cardTemplateMode) {
-      const el: FreeElement = {
-        ...comp.el, fill,
-        id: 'ct' + Date.now(),
-        zIndex: isBackground ? 0 : (cardTemplate.length + 1),
-      }
-      addCardTemplateEl(el)
-      return
-    }
-
+    const targetKey = cardTemplateMode ? activeCardLayoutId : activePageKey
     const el: FreeElement = {
       ...comp.el, fill,
       id: 'fe' + Date.now(),
-      zIndex: isBackground ? 0 : (pageElements[activePageKey]?.length ?? 0) + 1,
+      zIndex: isBackground ? 0 : (pageElements[targetKey]?.length ?? 0) + 1,
     }
-    addFreeEl(activePageKey, el)
+    addFreeEl(targetKey, el)
   }
 
   const handleDeleteContentPage = (pIdx: number, startIdx: number, count: number) => {
@@ -268,13 +263,36 @@ export default function LeftPanel() {
 
           {/* Active context chip */}
           {cardTemplateMode ? (
-            <div style={{ background: '#F7CC3A22', border: '1px solid #F7CC3A88', borderRadius: 9, padding: '7px 11px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#D4A500', flex: 'none' }} />
-              <span style={{ fontSize: 11.5, fontWeight: 700, color: '#211D17', flex: 1 }}>
-                Adding to: <span style={{ color: '#D4A500' }}>All Product Cards</span>
-              </span>
-              {cardTemplate.length > 0 && (
-                <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, color: '#9A9182', background: '#F0ECE3', padding: '2px 6px', borderRadius: 5 }}>{cardTemplate.length} els</span>
+            <div style={{ background: '#F7CC3A22', border: '1px solid #F7CC3A88', borderRadius: 9, padding: '7px 11px', marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: cardLayouts.length > 0 ? 8 : 0 }}>
+                <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#D4A500', flex: 'none' }} />
+                <span style={{ fontSize: 11.5, fontWeight: 700, color: '#211D17', flex: 1 }}>
+                  Layout: <span style={{ color: '#D4A500' }}>
+                    {activeCardLayoutId === 'card-template' ? 'Default' : (cardLayouts.find((l) => l.id === activeCardLayoutId)?.name ?? 'Default')}
+                  </span>
+                </span>
+                {cardTemplate.length > 0 && (
+                  <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, color: '#9A9182', background: '#F0ECE3', padding: '2px 6px', borderRadius: 5 }}>{cardTemplate.length} els</span>
+                )}
+              </div>
+              {cardLayouts.length > 0 && (
+                <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                  <button
+                    onClick={() => set({ activeCardLayoutId: 'card-template' })}
+                    style={{ border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 999, background: activeCardLayoutId === 'card-template' ? '#D4A500' : '#F0ECE3', color: activeCardLayoutId === 'card-template' ? '#fff' : '#6B645A' }}
+                  >
+                    Default
+                  </button>
+                  {cardLayouts.map((l) => (
+                    <button
+                      key={l.id}
+                      onClick={() => set({ activeCardLayoutId: l.id })}
+                      style={{ border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 999, background: activeCardLayoutId === l.id ? '#D4A500' : '#F0ECE3', color: activeCardLayoutId === l.id ? '#fff' : '#6B645A' }}
+                    >
+                      {l.name}
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
           ) : (

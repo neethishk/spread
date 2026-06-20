@@ -52,9 +52,12 @@ interface AppState {
   pageElements: Record<string, FreeElement[]>
   selectedFreeIds: string[]
   freeElPageKey: string | null
-  cardTemplate: FreeElement[]
+  cardLayouts: { id: string; name: string }[]
+  activeCardLayoutId: string
+  cardLayoutByProduct: Record<string, string>
   cardHiddenByProduct: Record<string, string[]>
   cardTemplateMode: boolean
+  editingCardProductId: string | null
   contentPageDragIdx: number | null
 
   // actions
@@ -111,9 +114,9 @@ interface AppState {
   toggleFreeElLock: (pageKey: string, id: string) => void
   removeProductsInRange: (startIdx: number, count: number) => void
   moveProductRange: (fromStart: number, fromCount: number, insertBefore: number) => void
-  addCardTemplateEl: (el: FreeElement) => void
-  updateCardTemplateEl: (id: string, patch: Partial<FreeElement>) => void
-  deleteCardTemplateEls: (ids: string[]) => void
+  addCardLayout: (name: string) => string
+  deleteCardLayout: (id: string) => void
+  setCardLayoutForProduct: (productId: string, layoutId: string) => void
   toggleCardElForProduct: (productId: string, elId: string) => void
   set: (patch: Partial<AppState>) => void
 }
@@ -159,9 +162,12 @@ export const useStore = create<AppState>((set, get) => ({
   pageElements: {},
   selectedFreeIds: [],
   freeElPageKey: null,
-  cardTemplate: [],
+  cardLayouts: [],
+  activeCardLayoutId: 'card-template',
+  cardLayoutByProduct: {},
   cardHiddenByProduct: {},
   cardTemplateMode: false,
+  editingCardProductId: null,
   contentPageDragIdx: null,
 
   set: (patch) => set(patch),
@@ -229,7 +235,9 @@ export const useStore = create<AppState>((set, get) => ({
       banners: JSON.parse(JSON.stringify(DEFAULT_BANNERS)),
       selected: null, editingId: null, history: [], future: [], leftTab: 'deals',
       pageElements: {}, selectedFreeIds: [], freeElPageKey: null,
-      cardTemplate: [], cardHiddenByProduct: {}, cardTemplateMode: false,
+      cardLayouts: [], activeCardLayoutId: 'card-template',
+      cardLayoutByProduct: {}, cardHiddenByProduct: {}, cardTemplateMode: false,
+      editingCardProductId: null,
     })
   },
 
@@ -595,7 +603,9 @@ export const useStore = create<AppState>((set, get) => ({
       cover: { brand: np.store, headline1: np.headline1, headline2: np.headline2, burst: np.burst, validity: 'VALID THIS WEEK' },
       banners: JSON.parse(JSON.stringify(DEFAULT_BANNERS)), selected: null, editingId: null, history: [], future: [], leftTab: 'deals',
       pageElements: {}, selectedFreeIds: [], freeElPageKey: null,
-      cardTemplate: [], cardHiddenByProduct: {}, cardTemplateMode: false,
+      cardLayouts: [], activeCardLayoutId: 'card-template',
+      cardLayoutByProduct: {}, cardHiddenByProduct: {}, cardTemplateMode: false,
+      editingCardProductId: null,
     }))
   },
 
@@ -627,7 +637,9 @@ export const useStore = create<AppState>((set, get) => ({
       cover: { brand: np.store, headline1: np.headline1, headline2: np.headline2, burst: np.burst, validity: 'VALID THIS WEEK' },
       banners: JSON.parse(JSON.stringify(DEFAULT_BANNERS)), selected: null, editingId: null, history: [], future: [], leftTab: 'deals',
       pageElements: {}, selectedFreeIds: [], freeElPageKey: null,
-      cardTemplate: [], cardHiddenByProduct: {}, cardTemplateMode: false,
+      cardLayouts: [], activeCardLayoutId: 'card-template',
+      cardLayoutByProduct: {}, cardHiddenByProduct: {}, cardTemplateMode: false,
+      editingCardProductId: null,
     }))
   },
 
@@ -752,22 +764,31 @@ export const useStore = create<AppState>((set, get) => ({
     })
   },
 
-  addCardTemplateEl: (el) => {
-    set((s) => ({
-      cardTemplate: [...s.cardTemplate, el],
-      cardTemplateMode: true,
-    }))
+  addCardLayout: (name) => {
+    const id = 'cl' + Date.now()
+    set((s) => ({ cardLayouts: [...s.cardLayouts, { id, name }], activeCardLayoutId: id }))
+    return id
   },
 
-  updateCardTemplateEl: (id, patch) => {
-    set((s) => ({
-      cardTemplate: s.cardTemplate.map((e) => e.id === id ? { ...e, ...patch } : e),
-    }))
+  deleteCardLayout: (id) => {
+    set((s) => {
+      const next = s.pageElements
+      const updated = { ...next }
+      delete updated[id]
+      return {
+        cardLayouts: s.cardLayouts.filter((l) => l.id !== id),
+        activeCardLayoutId: s.activeCardLayoutId === id ? 'card-template' : s.activeCardLayoutId,
+        pageElements: updated,
+        cardLayoutByProduct: Object.fromEntries(
+          Object.entries(s.cardLayoutByProduct).filter(([, v]) => v !== id)
+        ),
+      }
+    })
   },
 
-  deleteCardTemplateEls: (ids) => {
+  setCardLayoutForProduct: (productId, layoutId) => {
     set((s) => ({
-      cardTemplate: s.cardTemplate.filter((e) => !ids.includes(e.id)),
+      cardLayoutByProduct: { ...s.cardLayoutByProduct, [productId]: layoutId },
     }))
   },
 

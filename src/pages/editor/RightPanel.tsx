@@ -9,10 +9,10 @@ export default function RightPanel() {
     selected, template, gridKey, pageSize, orientation,
     accentKey, customAccent, badge, products, manualPages, banners, cover,
     pageElements, selectedFreeIds, freeElPageKey, pageGrids,
-    cardTemplate, cardHiddenByProduct,
+    cardLayouts, cardLayoutByProduct, cardHiddenByProduct,
     set, updateProduct, updateOv, duplicateProduct, removeProduct, moveProduct,
     updateFreeEl, deleteFreeEls, groupFreeEls, ungroupFreeEls,
-    setPageGrid, setManualGrid, toggleCardElForProduct, deleteCardTemplateEls,
+    setPageGrid, setManualGrid, toggleCardElForProduct, setCardLayoutForProduct,
   } = useStore(useShallow((s) => ({
     selected: s.selected, template: s.template, gridKey: s.gridKey,
     pageSize: s.pageSize, orientation: s.orientation,
@@ -20,14 +20,15 @@ export default function RightPanel() {
     products: s.products, manualPages: s.manualPages, banners: s.banners, cover: s.cover,
     pageElements: s.pageElements, selectedFreeIds: s.selectedFreeIds, freeElPageKey: s.freeElPageKey,
     pageGrids: s.pageGrids,
-    cardTemplate: s.cardTemplate, cardHiddenByProduct: s.cardHiddenByProduct,
+    cardLayouts: s.cardLayouts, cardLayoutByProduct: s.cardLayoutByProduct,
+    cardHiddenByProduct: s.cardHiddenByProduct,
     set: s.set, updateProduct: s.updateProduct, updateOv: s.updateOv,
     duplicateProduct: s.duplicateProduct, removeProduct: s.removeProduct, moveProduct: s.moveProduct,
     updateFreeEl: s.updateFreeEl, deleteFreeEls: s.deleteFreeEls,
     groupFreeEls: s.groupFreeEls, ungroupFreeEls: s.ungroupFreeEls,
     setPageGrid: s.setPageGrid, setManualGrid: s.setManualGrid,
     toggleCardElForProduct: s.toggleCardElForProduct,
-    deleteCardTemplateEls: s.deleteCardTemplateEls,
+    setCardLayoutForProduct: s.setCardLayoutForProduct,
   })))
 
   const ac = computeAccent(accentKey, customAccent)
@@ -305,33 +306,80 @@ export default function RightPanel() {
                 })}
               </div>
 
-              {/* Card Template Elements */}
-              {cardTemplate.length > 0 && (
-                <div>
-                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: '1.5px', color: '#9A9182', marginBottom: 6 }}>CARD TEMPLATE</div>
-                  <div style={{ fontSize: 11.5, color: '#9A9182', marginBottom: 12, lineHeight: 1.45 }}>Toggle card template elements for this product only.</div>
-                  {cardTemplate.map((el) => {
-                    const hidden = (cardHiddenByProduct[id] ?? []).includes(el.id)
-                    return (
-                      <div key={el.id} onClick={() => toggleCardElForProduct(id, el.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', padding: '8px 0', borderBottom: '1px solid #EFEADF' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <div style={{ width: 20, height: 20, borderRadius: 5, background: el.fill === 'transparent' ? '#F0ECE3' : el.fill, border: '1px solid #ECE8DF', flex: 'none' }} />
-                          <span style={{ fontSize: 13, fontWeight: 600 }}>{el.text || el.type}</span>
-                        </div>
-                        <div style={{ width: 38, height: 22, borderRadius: 999, background: !hidden ? accent : '#D5CEC1', position: 'relative' }}>
-                          <div style={{ position: 'absolute', top: 2, left: swX(!hidden), width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left .15s' }} />
+              {/* Card Template & Layout */}
+              {(() => {
+                const assignedLayoutId = cardLayoutByProduct[id] ?? 'card-template'
+                const assignedEls = pageElements[assignedLayoutId] ?? []
+                const perProductEls = pageElements['cp-' + id] ?? []
+                const allLayouts = [{ id: 'card-template', name: 'Default' }, ...cardLayouts]
+                return (
+                  <div>
+                    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: '1.5px', color: '#9A9182', marginBottom: 6 }}>CARD DESIGN</div>
+
+                    {/* Layout assignment */}
+                    {cardLayouts.length > 0 && (
+                      <div style={{ marginBottom: 14 }}>
+                        <label style={{ fontSize: 11.5, fontWeight: 700, color: '#6B645A', display: 'block', marginBottom: 6 }}>Card layout</label>
+                        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                          {allLayouts.map((l) => (
+                            <button
+                              key={l.id}
+                              onClick={() => setCardLayoutForProduct(id, l.id)}
+                              style={{ border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 11, fontWeight: 700, padding: '5px 10px', borderRadius: 999, background: assignedLayoutId === l.id ? accent : '#F0ECE3', color: assignedLayoutId === l.id ? '#fff' : '#6B645A' }}
+                            >
+                              {l.name}
+                            </button>
+                          ))}
                         </div>
                       </div>
-                    )
-                  })}
-                  <button
-                    onClick={() => deleteCardTemplateEls(cardTemplate.map((e) => e.id))}
-                    style={{ marginTop: 10, width: '100%', border: '1px solid #FECACA', background: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: 600, padding: 8, borderRadius: 9, color: '#DC2626' }}
-                  >
-                    Clear card template
-                  </button>
-                </div>
-              )}
+                    )}
+
+                    {/* Toggle template elements per product */}
+                    {assignedEls.length > 0 && (
+                      <>
+                        <div style={{ fontSize: 11.5, color: '#9A9182', marginBottom: 10, lineHeight: 1.45 }}>Show/hide template elements on this card.</div>
+                        {assignedEls.map((el) => {
+                          const hidden = (cardHiddenByProduct[id] ?? []).includes(el.id)
+                          return (
+                            <div key={el.id} onClick={() => toggleCardElForProduct(id, el.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', padding: '8px 0', borderBottom: '1px solid #EFEADF' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <div style={{ width: 20, height: 20, borderRadius: 5, background: el.fill === 'transparent' ? '#F0ECE3' : el.fill, border: '1px solid #ECE8DF', flex: 'none' }} />
+                                <span style={{ fontSize: 13, fontWeight: 600 }}>{el.text || el.type}</span>
+                              </div>
+                              <div style={{ width: 38, height: 22, borderRadius: 999, background: !hidden ? accent : '#D5CEC1', position: 'relative' }}>
+                                <div style={{ position: 'absolute', top: 2, left: swX(!hidden), width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left .15s' }} />
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </>
+                    )}
+
+                    {/* Per-product card editing */}
+                    <div style={{ marginTop: 14, display: 'flex', gap: 8 }}>
+                      <button
+                        onClick={() => set({ editingCardProductId: id, activePageKey: 'cp-' + id, leftTab: 'elements', cardTemplateMode: false })}
+                        style={{ flex: 1, border: `1px solid ${accent}`, background: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: 700, padding: '8px 10px', borderRadius: 9, color: accent }}
+                      >
+                        + Add card elements
+                      </button>
+                      {perProductEls.length > 0 && (
+                        <button
+                          onClick={() => deleteFreeEls('cp-' + id, perProductEls.map((e) => e.id))}
+                          style={{ border: '1px solid #FECACA', background: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: 600, padding: '8px 10px', borderRadius: 9, color: '#DC2626' }}
+                        >
+                          Clear ({perProductEls.length})
+                        </button>
+                      )}
+                    </div>
+                    {perProductEls.length > 0 && (
+                      <div style={{ marginTop: 8, fontSize: 11, color: '#9A9182', lineHeight: 1.4 }}>
+                        {perProductEls.length} element{perProductEls.length !== 1 ? 's' : ''} unique to this card. Click "Add card elements" to edit.
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
 
               {/* Layout */}
               <div>
@@ -681,6 +729,10 @@ export default function RightPanel() {
                     {(['left', 'center', 'right'] as const).map((a) => (
                       <button key={a} onClick={() => upd({ textAlign: a })} style={{ flex: 1, border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: 600, padding: 7, borderRadius: 7, ...seg(fe.textAlign === a) }}>{a[0].toUpperCase() + a.slice(1)}</button>
                     ))}
+                  </div>
+                  <div style={{ display: 'flex', background: '#F0ECE3', borderRadius: 9, padding: 3, marginBottom: 10 }}>
+                    <button onClick={() => upd({ direction: 'ltr' })} style={{ flex: 1, border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: 600, padding: 7, borderRadius: 7, ...seg(fe.direction !== 'rtl') }}>LTR</button>
+                    <button onClick={() => upd({ direction: 'rtl' })} style={{ flex: 1, border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: 600, padding: 7, borderRadius: 7, ...seg(fe.direction === 'rtl') }}>RTL (Arabic)</button>
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button onClick={() => upd({ bold: !fe.bold })} style={{ flex: 1, border: '1px solid #E0DACE', background: fe.bold ? '#211D17' : '#fff', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 700, padding: 8, borderRadius: 9, color: fe.bold ? '#fff' : '#211D17' }}>B</button>
