@@ -96,6 +96,7 @@ interface AppState {
   addFreeEl: (pageKey: string, el: FreeElement) => void
   updateFreeEl: (pageKey: string, id: string, patch: Partial<FreeElement>) => void
   deleteFreeEls: (pageKey: string, ids: string[]) => void
+  duplicateFreeEl: (pageKey: string, id: string) => void
   groupFreeEls: (pageKey: string, ids: string[]) => void
   ungroupFreeEls: (pageKey: string, groupId: string) => void
   set: (patch: Partial<AppState>) => void
@@ -544,6 +545,19 @@ export const useStore = create<AppState>((set, get) => ({
       selectedFreeIds: [],
       freeElPageKey: null,
     }))
+  },
+
+  duplicateFreeEl: (pageKey, id) => {
+    set((s) => {
+      const els = s.pageElements[pageKey] ?? []
+      const el = els.find((e) => e.id === id)
+      if (!el) return {}
+      const copy: FreeElement = { ...el, id: 'fe' + Date.now(), x: Math.min(90, el.x + 3), y: Math.min(90, el.y + 3), zIndex: els.length + 1 }
+      return {
+        pageElements: { ...s.pageElements, [pageKey]: [...els, copy] },
+        selectedFreeIds: [copy.id],
+      }
+    })
   },
 
   groupFreeEls: (pageKey, ids) => {

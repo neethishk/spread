@@ -7,6 +7,7 @@ import LeftPanel from './LeftPanel'
 import Canvas from './Canvas'
 import RightPanel from './RightPanel'
 import ExportModal from './ExportModal'
+import ContextBar from './ContextBar'
 
 export default function Editor() {
   const {
@@ -169,6 +170,9 @@ export default function Editor() {
             onClick={() => set({ selected: null })}
           />
         </div>
+
+        {/* Context toolbar — floats above canvas when free element is selected */}
+        <ContextBar />
 
         {/* Left panel */}
         <LeftPanel />

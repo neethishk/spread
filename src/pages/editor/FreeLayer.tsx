@@ -10,6 +10,17 @@ interface Props {
   accent: string
 }
 
+const HANDLES = [
+  { dir: 'nw', xPct: 0,   yPct: 0,   cursor: 'nw-resize' },
+  { dir: 'n',  xPct: 0.5, yPct: 0,   cursor: 'n-resize'  },
+  { dir: 'ne', xPct: 1,   yPct: 0,   cursor: 'ne-resize' },
+  { dir: 'e',  xPct: 1,   yPct: 0.5, cursor: 'e-resize'  },
+  { dir: 'se', xPct: 1,   yPct: 1,   cursor: 'se-resize' },
+  { dir: 's',  xPct: 0.5, yPct: 1,   cursor: 's-resize'  },
+  { dir: 'sw', xPct: 0,   yPct: 1,   cursor: 'sw-resize' },
+  { dir: 'w',  xPct: 0,   yPct: 0.5, cursor: 'w-resize'  },
+]
+
 export default function FreeLayer({ pageKey, pageW, pageH, accent }: Props) {
   const { tool, pageElements, selectedFreeIds, freeElPageKey, set, addFreeEl, updateFreeEl } = useStore(
     useShallow((s) => ({
@@ -31,6 +42,7 @@ export default function FreeLayer({ pageKey, pageW, pageH, accent }: Props) {
   const [drawing, setDrawing] = useState<{ x: number; y: number; w: number; h: number } | null>(null)
   const drawStart = useRef<{ x: number; y: number } | null>(null)
   const moveState = useRef<{ id: string; sx: number; sy: number; ox: number; oy: number } | null>(null)
+  const resizeState = useRef<{ el: FreeElement; dir: string; sx: number; sy: number; ox: number; oy: number; ow: number; oh: number } | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
 
   const toRel = (pxVal: number, total: number) => (pxVal / total) * 100
@@ -130,7 +142,34 @@ export default function FreeLayer({ pageKey, pageW, pageH, accent }: Props) {
 
   const onElUp = () => { moveState.current = null }
 
+  // ── Resize ───────────────────────────────────────────────────────────────────
+
+  const onResizeDown = (e: React.PointerEvent<HTMLDivElement>, el: FreeElement, dir: string) => {
+    e.stopPropagation()
+    const pos = getPos(e)
+    resizeState.current = { el, dir, sx: pos.x, sy: pos.y, ox: el.x, oy: el.y, ow: el.w, oh: el.h }
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+
+  const onResizeMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!resizeState.current) return
+    const { el, dir, sx, sy, ox, oy, ow, oh } = resizeState.current
+    const pos = getPos(e)
+    const dx = pos.x - sx
+    const dy = pos.y - sy
+    let x = ox, y = oy, w = ow, h = oh
+    if (dir.includes('e')) w = Math.max(4, ow + dx)
+    if (dir.includes('s')) h = Math.max(4, oh + dy)
+    if (dir.includes('w')) { w = Math.max(4, ow - dx); x = w === 4 ? ox + ow - 4 : ox + dx }
+    if (dir.includes('n')) { h = Math.max(4, oh - dy); y = h === 4 ? oy + oh - 4 : oy + dy }
+    updateFreeEl(pageKey, el.id, { x, y, w, h })
+  }
+
+  const onResizeUp = () => { resizeState.current = null }
+
   // ── Rendering ────────────────────────────────────────────────────────────────
+
+  const stopClick = (e: React.MouseEvent) => e.stopPropagation()
 
   return (
     <div ref={containerRef} style={{ position: 'absolute', inset: 0, zIndex: 10, pointerEvents: 'none' }}>
@@ -152,14 +191,14 @@ export default function FreeLayer({ pageKey, pageW, pageH, accent }: Props) {
         if (el.type === 'rect') {
           return (
             <div key={el.id} style={{ ...base, background: el.fill, border: el.stroke !== 'none' ? `${el.strokeW}px solid ${el.stroke}` : 'none' }}
-              onPointerDown={(e) => onElDown(e, el)} onPointerMove={(e) => onElMove(e, el)} onPointerUp={onElUp} />
+              onPointerDown={(e) => onElDown(e, el)} onPointerMove={(e) => onElMove(e, el)} onPointerUp={onElUp} onClick={stopClick} />
           )
         }
 
         if (el.type === 'ellipse') {
           return (
             <div key={el.id} style={{ ...base, background: el.fill, border: el.stroke !== 'none' ? `${el.strokeW}px solid ${el.stroke}` : 'none', borderRadius: '50%' }}
-              onPointerDown={(e) => onElDown(e, el)} onPointerMove={(e) => onElMove(e, el)} onPointerUp={onElUp} />
+              onPointerDown={(e) => onElDown(e, el)} onPointerMove={(e) => onElMove(e, el)} onPointerUp={onElUp} onClick={stopClick} />
           )
         }
 
@@ -167,7 +206,7 @@ export default function FreeLayer({ pageKey, pageW, pageH, accent }: Props) {
           return (
             <div key={el.id}
               style={{ ...base, background: '#F0ECE3', border: '1px dashed #CFC8BA', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              onPointerDown={(e) => onElDown(e, el)} onPointerMove={(e) => onElMove(e, el)} onPointerUp={onElUp}
+              onPointerDown={(e) => onElDown(e, el)} onPointerMove={(e) => onElMove(e, el)} onPointerUp={onElUp} onClick={stopClick}
             >
               {el.imageUrl
                 ? <img src={el.imageUrl} alt="" crossOrigin="anonymous" style={{ width: '100%', height: '100%', objectFit: el.fit }} />
@@ -181,7 +220,7 @@ export default function FreeLayer({ pageKey, pageW, pageH, accent }: Props) {
           return (
             <div key={el.id}
               style={{ ...base, background: el.fill, display: 'flex', alignItems: 'center', padding: '0 5%', gap: '3%' }}
-              onPointerDown={(e) => onElDown(e, el)} onPointerMove={(e) => onElMove(e, el)} onPointerUp={onElUp}
+              onPointerDown={(e) => onElDown(e, el)} onPointerMove={(e) => onElMove(e, el)} onPointerUp={onElUp} onClick={stopClick}
             >
               <div style={{ lineHeight: 1.1, pointerEvents: 'none' }}>
                 <div style={{ fontFamily: "'Anton', sans-serif", fontSize: el.fontSize, color: el.fontColor, letterSpacing: '1px', lineHeight: 0.95 }}>{el.text || 'BRAND NAME'}</div>
@@ -195,7 +234,7 @@ export default function FreeLayer({ pageKey, pageW, pageH, accent }: Props) {
           return (
             <div key={el.id}
               style={{ ...base, background: el.fill, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '0 4%' }}
-              onPointerDown={(e) => onElDown(e, el)} onPointerMove={(e) => onElMove(e, el)} onPointerUp={onElUp}
+              onPointerDown={(e) => onElDown(e, el)} onPointerMove={(e) => onElMove(e, el)} onPointerUp={onElUp} onClick={stopClick}
             >
               <div style={{ fontFamily: "'Anton', sans-serif", fontSize: el.fontSize, color: el.fontColor, letterSpacing: '1px', transform: 'skewX(-5deg)', lineHeight: 0.9, pointerEvents: 'none' }}>{el.text || 'PROMO HEADLINE'}</div>
               {el.text2 && <div style={{ fontFamily: "'Anton', sans-serif", fontSize: Math.max(8, el.fontSize * 0.52), color: el.fontColor, letterSpacing: '2px', marginTop: '2%', opacity: 0.92, pointerEvents: 'none' }}>{el.text2}</div>}
@@ -208,7 +247,7 @@ export default function FreeLayer({ pageKey, pageW, pageH, accent }: Props) {
           return (
             <div key={el.id}
               style={{ ...base, background: el.fill, borderRadius: '50%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', lineHeight: 1, boxShadow: '0 2px 10px rgba(33,29,23,.22)' }}
-              onPointerDown={(e) => onElDown(e, el)} onPointerMove={(e) => onElMove(e, el)} onPointerUp={onElUp}
+              onPointerDown={(e) => onElDown(e, el)} onPointerMove={(e) => onElMove(e, el)} onPointerUp={onElUp} onClick={stopClick}
             >
               {el.text3 && <div style={{ fontSize: Math.max(7, el.fontSize * 0.22), fontWeight: 800, color: el.fontColor, fontFamily: "'Hanken Grotesk', sans-serif", letterSpacing: '2px', pointerEvents: 'none' }}>{el.text3}</div>}
               <div style={{ display: 'flex', alignItems: 'flex-start', pointerEvents: 'none' }}>
@@ -224,7 +263,7 @@ export default function FreeLayer({ pageKey, pageW, pageH, accent }: Props) {
           return (
             <div key={el.id}
               style={{ ...base, background: el.fill, borderRadius: '50%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', lineHeight: 1.1, boxShadow: '0 2px 10px rgba(33,29,23,.22)', border: el.stroke !== 'none' ? `${el.strokeW}px solid ${el.stroke}` : 'none' }}
-              onPointerDown={(e) => onElDown(e, el)} onPointerMove={(e) => onElMove(e, el)} onPointerUp={onElUp}
+              onPointerDown={(e) => onElDown(e, el)} onPointerMove={(e) => onElMove(e, el)} onPointerUp={onElUp} onClick={stopClick}
             >
               <div style={{ fontFamily: "'Anton', sans-serif", fontSize: el.fontSize, color: el.fontColor, lineHeight: 0.95, pointerEvents: 'none' }}>{el.text || '800'}</div>
               {el.text2 && <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: Math.max(7, el.fontSize * 0.28), fontWeight: 700, color: el.fontColor, letterSpacing: '2px', pointerEvents: 'none' }}>{el.text2}</div>}
@@ -236,7 +275,7 @@ export default function FreeLayer({ pageKey, pageW, pageH, accent }: Props) {
           return (
             <div key={el.id}
               style={{ ...base, background: el.fill, border: el.stroke !== 'none' ? `${el.strokeW}px solid ${el.stroke}` : 'none', borderRadius: 8, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 6%' }}
-              onPointerDown={(e) => onElDown(e, el)} onPointerMove={(e) => onElMove(e, el)} onPointerUp={onElUp}
+              onPointerDown={(e) => onElDown(e, el)} onPointerMove={(e) => onElMove(e, el)} onPointerUp={onElUp} onClick={stopClick}
             >
               {el.text2 && <div style={{ fontFamily: "'Space Mono', monospace", fontSize: Math.max(7, el.fontSize * 0.18), color: el.fontColor, opacity: 0.5, textDecoration: 'line-through', letterSpacing: '1px', pointerEvents: 'none' }}>{el.text2}</div>}
               <div style={{ display: 'flex', alignItems: 'flex-start', lineHeight: 0.9, pointerEvents: 'none' }}>
@@ -255,6 +294,7 @@ export default function FreeLayer({ pageKey, pageW, pageH, accent }: Props) {
             onPointerDown={(e) => { if (!isEditing) onElDown(e, el) }}
             onPointerMove={(e) => { if (!isEditing) onElMove(e, el) }}
             onPointerUp={onElUp}
+            onClick={stopClick}
             onDoubleClick={(e) => { e.stopPropagation(); setEditingId(el.id) }}
           >
             {isEditing ? (
@@ -273,6 +313,32 @@ export default function FreeLayer({ pageKey, pageW, pageH, accent }: Props) {
           </div>
         )
       })}
+
+      {/* Resize handles for selected elements */}
+      {tool === 'select' && els.filter((el) => selIds.includes(el.id)).map((el) =>
+        HANDLES.map(({ dir, xPct, yPct, cursor }) => (
+          <div
+            key={`${el.id}-h-${dir}`}
+            style={{
+              position: 'absolute',
+              left: `calc(${el.x + el.w * xPct}% - 5px)`,
+              top: `calc(${el.y + el.h * yPct}% - 5px)`,
+              width: 10, height: 10,
+              background: '#fff',
+              border: `2px solid ${accent}`,
+              borderRadius: 2,
+              cursor,
+              zIndex: 200,
+              pointerEvents: 'all',
+              boxShadow: '0 1px 4px rgba(33,29,23,.25)',
+            }}
+            onPointerDown={(e) => onResizeDown(e, el, dir)}
+            onPointerMove={onResizeMove}
+            onPointerUp={onResizeUp}
+            onClick={stopClick}
+          />
+        ))
+      )}
 
       {/* Draw capture surface */}
       {isDraw && (

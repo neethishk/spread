@@ -197,39 +197,43 @@ export default function LeftPanel() {
 
       {/* DESIGN TAB */}
       {leftTab === 'elements' && (
-        <div className="sp-scroll" style={{ flex: 1, overflow: 'auto', padding: '14px 14px' }}>
+        <div className="sp-scroll" style={{ flex: 1, overflow: 'auto', padding: '12px 12px' }}>
 
-          {/* Active page indicator */}
-          <div style={{ background: '#fff', border: '1px solid #E8E2D6', borderRadius: 10, padding: '9px 12px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: accent, flex: 'none' }} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#211D17' }}>Adding to: {activePageLabel}</div>
-              <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 9, color: '#9A9182', letterSpacing: '0.3px', marginTop: 1 }}>Click a page to switch target</div>
-            </div>
+          {/* Active page chip */}
+          <div style={{ background: accent + '18', border: `1px solid ${accent}44`, borderRadius: 9, padding: '7px 11px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 7, height: 7, borderRadius: '50%', background: accent, flex: 'none' }} />
+            <span style={{ fontSize: 11.5, fontWeight: 700, color: '#211D17', flex: 1 }}>Adding to: <span style={{ color: accent }}>{activePageLabel}</span></span>
           </div>
 
           {/* Component categories */}
           {COMPONENT_CATEGORIES.map((cat) => {
             const comps = COMPONENT_TEMPLATES.filter((c) => c.category === cat)
             return (
-              <div key={cat} style={{ marginBottom: 20 }}>
-                <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, color: '#B7AE9E', letterSpacing: '1.2px', marginBottom: 9 }}>{cat.toUpperCase()}</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
+              <div key={cat} style={{ marginBottom: 18 }}>
+                <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 9.5, color: '#B7AE9E', letterSpacing: '1.5px', marginBottom: 8, paddingLeft: 2 }}>{cat.toUpperCase()}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                   {comps.map((comp) => (
-                    <div
+                    <button
                       key={comp.id}
                       onClick={() => handleAddComponent(comp)}
-                      style={{ background: '#fff', border: '1px solid #E8E2D6', borderRadius: 10, padding: '9px 9px 8px', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 5 }}
+                      title={comp.hint}
+                      style={{ background: '#fff', border: '1.5px solid #E8E2D6', borderRadius: 10, padding: '0 0 8px', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 0, textAlign: 'left', overflow: 'hidden', transition: 'border-color .12s, box-shadow .12s', fontFamily: 'inherit' }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = accent; (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 0 0 1px ${accent}` }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#E8E2D6'; (e.currentTarget as HTMLButtonElement).style.boxShadow = 'none' }}
                     >
                       <ComponentPreview comp={comp} accent={accent} />
-                      <div style={{ fontSize: 11.5, fontWeight: 700, color: '#211D17', lineHeight: 1.2 }}>{comp.label}</div>
-                      <div style={{ fontSize: 10, color: '#9A9182', lineHeight: 1.3 }}>{comp.hint}</div>
-                    </div>
+                      <div style={{ padding: '6px 8px 0', fontSize: 11, fontWeight: 700, color: '#211D17', lineHeight: 1.2 }}>{comp.label}</div>
+                    </button>
                   ))}
                 </div>
               </div>
             )
           })}
+
+          {/* Hint */}
+          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 9, color: '#C2BBA8', letterSpacing: '0.4px', textAlign: 'center', marginTop: 4, paddingBottom: 8 }}>
+            CLICK ANY ELEMENT TO ADD IT
+          </div>
         </div>
       )}
     </div>
@@ -283,70 +287,74 @@ function ComponentPreview({ comp, accent }: { comp: ComponentTemplate; accent: s
   const fill = comp.el.fill === ACCENT_PLACEHOLDER ? accent : comp.el.fill
   const isCircle = comp.el.type === 'badge' || comp.el.type === 'sticker' || comp.el.type === 'ellipse'
   const isDivider = comp.id === 'divider'
+  const H = 56
 
   if (isDivider) {
     return (
-      <div style={{ width: '100%', height: 40, display: 'flex', alignItems: 'center', paddingLeft: 4, paddingRight: 4 }}>
-        <div style={{ width: '100%', height: 2, background: '#CFC8BA', borderRadius: 1 }} />
+      <div style={{ width: '100%', height: H, background: '#F8F6F2', display: 'flex', alignItems: 'center', padding: '0 10px' }}>
+        <div style={{ width: '100%', height: 3, background: '#CFC8BA', borderRadius: 2 }} />
       </div>
     )
   }
 
   if (comp.el.type === 'image') {
     return (
-      <div style={{ width: '100%', height: 40, borderRadius: 6, background: '#F0ECE3', border: '1px dashed #CFC8BA', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 2 }}>
-        <span style={{ fontSize: 14, color: '#B7AE9E' }}>⊞</span>
+      <div style={{ width: '100%', height: H, background: '#F0ECE3', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 3 }}>
+        <span style={{ fontSize: 18, color: '#B7AE9E' }}>⊞</span>
+        <span style={{ fontSize: 9, color: '#B7AE9E', fontFamily: "'Space Mono', monospace" }}>IMAGE</span>
       </div>
     )
   }
 
   if (isCircle) {
-    const stroke = comp.el.stroke !== 'none' ? `${comp.el.strokeW}px solid ${comp.el.stroke === '#fff' ? '#fff' : comp.el.stroke}` : 'none'
+    const stroke = comp.el.stroke !== 'none' ? `${comp.el.strokeW}px solid ${comp.el.stroke}` : 'none'
+    const sz = 46
     return (
-      <div style={{ width: 40, height: 40, borderRadius: '50%', background: fill, border: stroke, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', alignSelf: 'center', boxShadow: '0 1px 4px rgba(33,29,23,.15)' }}>
-        <div style={{ fontFamily: "'Anton', sans-serif", fontSize: comp.el.type === 'sticker' ? 13 : 11, color: comp.el.fontColor, lineHeight: 0.95 }}>{comp.el.text}</div>
-        {comp.el.text2 && <div style={{ fontSize: 7, fontWeight: 700, color: comp.el.fontColor, letterSpacing: '0.5px' }}>{comp.el.text2}</div>}
+      <div style={{ width: '100%', height: H, background: '#F8F6F2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: sz, height: sz, borderRadius: '50%', background: fill, border: stroke, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(33,29,23,.18)' }}>
+          <div style={{ fontFamily: "'Anton', sans-serif", fontSize: comp.el.type === 'sticker' ? 15 : 13, color: comp.el.fontColor, lineHeight: 0.95 }}>{comp.el.text}</div>
+          {comp.el.text2 && <div style={{ fontSize: 8, fontWeight: 700, color: comp.el.fontColor, letterSpacing: '0.5px' }}>{comp.el.text2}</div>}
+        </div>
       </div>
     )
   }
 
   if (comp.el.type === 'brand-header') {
     return (
-      <div style={{ width: '100%', height: 40, borderRadius: 6, background: fill, display: 'flex', alignItems: 'center', paddingLeft: 8, overflow: 'hidden' }}>
-        <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 10, color: comp.el.fontColor, letterSpacing: '0.5px' }}>{comp.el.text}</div>
+      <div style={{ width: '100%', height: H, background: fill, display: 'flex', alignItems: 'center', paddingLeft: 10, overflow: 'hidden' }}>
+        <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 13, color: comp.el.fontColor, letterSpacing: '1px' }}>{comp.el.text}</div>
       </div>
     )
   }
 
   if (comp.el.type === 'promo-band') {
     return (
-      <div style={{ width: '100%', height: 40, borderRadius: 6, background: fill, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-        <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 10, color: comp.el.fontColor, letterSpacing: '0.5px', transform: 'skewX(-4deg)' }}>{comp.el.text}</div>
-        {comp.el.text2 && <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 7, color: comp.el.fontColor, opacity: 0.85 }}>{comp.el.text2}</div>}
+      <div style={{ width: '100%', height: H, background: fill, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+        <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 13, color: comp.el.fontColor, letterSpacing: '1px', transform: 'skewX(-5deg)' }}>{comp.el.text}</div>
+        {comp.el.text2 && <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 9, color: comp.el.fontColor, opacity: 0.85, marginTop: 2 }}>{comp.el.text2}</div>}
       </div>
     )
   }
 
   if (comp.el.type === 'price-tag') {
     return (
-      <div style={{ width: '100%', height: 40, borderRadius: 6, background: comp.el.fill, border: `1px solid #211D17`, display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: 7, overflow: 'hidden' }}>
-        <div style={{ fontSize: 7, color: '#9A9182', textDecoration: 'line-through' }}>{comp.el.text2}</div>
-        <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 13, color: '#211D17', lineHeight: 0.95 }}>{comp.el.text3} {comp.el.text}</div>
+      <div style={{ width: '100%', height: H, background: comp.el.fill, borderBottom: '2px solid #211D1722', display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: 10, overflow: 'hidden' }}>
+        <div style={{ fontSize: 8, color: '#9A9182', textDecoration: 'line-through' }}>{comp.el.text2}</div>
+        <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 16, color: '#211D17', lineHeight: 0.95 }}>{comp.el.text3} {comp.el.text}</div>
       </div>
     )
   }
 
   if (comp.el.type === 'text') {
-    const lines = comp.el.fontSize >= 30 ? 1 : 2
     return (
-      <div style={{ width: '100%', height: 40, borderRadius: 6, background: '#F8F6F2', display: 'flex', alignItems: 'center', paddingLeft: 6, paddingRight: 4, overflow: 'hidden' }}>
-        <div style={{ fontSize: comp.el.fontSize >= 30 ? 11 : 9, fontWeight: comp.el.bold ? 700 : 400, color: '#211D17', fontStyle: comp.el.italic ? 'italic' : 'normal', lineHeight: 1.35, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: lines, WebkitBoxOrient: 'vertical' as const }}>{comp.el.text}</div>
+      <div style={{ width: '100%', height: H, background: '#F8F6F2', display: 'flex', alignItems: 'center', paddingLeft: 8, paddingRight: 6, overflow: 'hidden' }}>
+        <div style={{ fontSize: comp.el.fontSize >= 30 ? 14 : 11, fontWeight: comp.el.bold ? 700 : 400, color: '#211D17', fontStyle: comp.el.italic ? 'italic' : 'normal', lineHeight: 1.3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>{comp.el.text}</div>
       </div>
     )
   }
 
   // rect / ellipse / default
   return (
-    <div style={{ width: '100%', height: 40, borderRadius: comp.el.type === 'ellipse' ? '50%' : 6, background: fill, border: comp.el.stroke !== 'none' ? `1px solid ${comp.el.stroke}` : '1px solid #E4DFD5' }} />
+    <div style={{ width: '100%', height: H, borderRadius: comp.el.type === 'ellipse' ? '50%' : 0, background: fill, border: comp.el.stroke !== 'none' ? `1.5px solid ${comp.el.stroke}` : 'none' }} />
   )
 }
