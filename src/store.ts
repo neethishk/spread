@@ -52,6 +52,10 @@ interface AppState {
   pageElements: Record<string, FreeElement[]>
   selectedFreeIds: string[]
   freeElPageKey: string | null
+  cardTemplate: FreeElement[]
+  cardHiddenByProduct: Record<string, string[]>
+  cardTemplateMode: boolean
+  contentPageDragIdx: number | null
 
   // actions
   initAuth: () => void
@@ -105,6 +109,12 @@ interface AppState {
   ungroupFreeEls: (pageKey: string, groupId: string) => void
   setFreeElZIndex: (pageKey: string, id: string, dir: 'forward' | 'backward' | 'front' | 'back') => void
   toggleFreeElLock: (pageKey: string, id: string) => void
+  removeProductsInRange: (startIdx: number, count: number) => void
+  moveProductRange: (fromStart: number, fromCount: number, insertBefore: number) => void
+  addCardTemplateEl: (el: FreeElement) => void
+  updateCardTemplateEl: (id: string, patch: Partial<FreeElement>) => void
+  deleteCardTemplateEls: (ids: string[]) => void
+  toggleCardElForProduct: (productId: string, elId: string) => void
   set: (patch: Partial<AppState>) => void
 }
 
@@ -149,6 +159,10 @@ export const useStore = create<AppState>((set, get) => ({
   pageElements: {},
   selectedFreeIds: [],
   freeElPageKey: null,
+  cardTemplate: [],
+  cardHiddenByProduct: {},
+  cardTemplateMode: false,
+  contentPageDragIdx: null,
 
   set: (patch) => set(patch),
 
@@ -214,6 +228,8 @@ export const useStore = create<AppState>((set, get) => ({
       cover: { brand: p.store, headline1: p.headline1, headline2: p.headline2, burst: p.burst, validity: 'VALID THIS WEEK' },
       banners: JSON.parse(JSON.stringify(DEFAULT_BANNERS)),
       selected: null, editingId: null, history: [], future: [], leftTab: 'deals',
+      pageElements: {}, selectedFreeIds: [], freeElPageKey: null,
+      cardTemplate: [], cardHiddenByProduct: {}, cardTemplateMode: false,
     })
   },
 
@@ -578,6 +594,8 @@ export const useStore = create<AppState>((set, get) => ({
       pageSize: 'a4', orientation: 'portrait',
       cover: { brand: np.store, headline1: np.headline1, headline2: np.headline2, burst: np.burst, validity: 'VALID THIS WEEK' },
       banners: JSON.parse(JSON.stringify(DEFAULT_BANNERS)), selected: null, editingId: null, history: [], future: [], leftTab: 'deals',
+      pageElements: {}, selectedFreeIds: [], freeElPageKey: null,
+      cardTemplate: [], cardHiddenByProduct: {}, cardTemplateMode: false,
     }))
   },
 
@@ -608,6 +626,8 @@ export const useStore = create<AppState>((set, get) => ({
       pageSize: 'a4', orientation: 'portrait',
       cover: { brand: np.store, headline1: np.headline1, headline2: np.headline2, burst: np.burst, validity: 'VALID THIS WEEK' },
       banners: JSON.parse(JSON.stringify(DEFAULT_BANNERS)), selected: null, editingId: null, history: [], future: [], leftTab: 'deals',
+      pageElements: {}, selectedFreeIds: [], freeElPageKey: null,
+      cardTemplate: [], cardHiddenByProduct: {}, cardTemplateMode: false,
     }))
   },
 
@@ -711,6 +731,57 @@ export const useStore = create<AppState>((set, get) => ({
       },
       selectedFreeIds: s.selectedFreeIds.filter((sid) => sid !== id),
     }))
+  },
+
+  removeProductsInRange: (startIdx, count) => {
+    get().record()
+    set((s) => ({
+      products: [...s.products.slice(0, startIdx), ...s.products.slice(startIdx + count)],
+      selected: null,
+    }))
+  },
+
+  moveProductRange: (fromStart, fromCount, insertBefore) => {
+    get().record()
+    set((s) => {
+      const arr = [...s.products]
+      const moved = arr.splice(fromStart, fromCount)
+      const adjusted = insertBefore > fromStart ? insertBefore - fromCount : insertBefore
+      arr.splice(adjusted, 0, ...moved)
+      return { products: arr }
+    })
+  },
+
+  addCardTemplateEl: (el) => {
+    set((s) => ({
+      cardTemplate: [...s.cardTemplate, el],
+      cardTemplateMode: true,
+    }))
+  },
+
+  updateCardTemplateEl: (id, patch) => {
+    set((s) => ({
+      cardTemplate: s.cardTemplate.map((e) => e.id === id ? { ...e, ...patch } : e),
+    }))
+  },
+
+  deleteCardTemplateEls: (ids) => {
+    set((s) => ({
+      cardTemplate: s.cardTemplate.filter((e) => !ids.includes(e.id)),
+    }))
+  },
+
+  toggleCardElForProduct: (productId, elId) => {
+    set((s) => {
+      const hidden = s.cardHiddenByProduct[productId] ?? []
+      const isHidden = hidden.includes(elId)
+      return {
+        cardHiddenByProduct: {
+          ...s.cardHiddenByProduct,
+          [productId]: isHidden ? hidden.filter((id) => id !== elId) : [...hidden, elId],
+        },
+      }
+    })
   },
 
   generateExport: async () => {

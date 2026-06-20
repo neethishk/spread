@@ -12,6 +12,7 @@ export default function Canvas() {
     products, manualPages, pageGrids, gridKey,
     cover, banners, badge, accentKey, customAccent,
     selected, editingId, dragId,
+    cardTemplate, cardHiddenByProduct, cardTemplateMode,
     set, stopEdit, liveProduct, startEdit, addDealToPage, reorder,
     tool, duplicateProduct, removeProduct, updateOv,
   } = useStore(useShallow((s) => ({
@@ -21,6 +22,8 @@ export default function Canvas() {
     cover: s.cover, banners: s.banners, badge: s.badge,
     accentKey: s.accentKey, customAccent: s.customAccent,
     selected: s.selected, editingId: s.editingId, dragId: s.dragId,
+    cardTemplate: s.cardTemplate, cardHiddenByProduct: s.cardHiddenByProduct,
+    cardTemplateMode: s.cardTemplateMode,
     tool: s.tool,
     set: s.set, stopEdit: s.stopEdit, liveProduct: s.liveProduct,
     startEdit: s.startEdit, addDealToPage: s.addDealToPage, reorder: s.reorder,
@@ -215,6 +218,8 @@ export default function Canvas() {
                   {pg.items.map((item) => (
                     <ProductCell
                       key={item.id} item={item} accent={accent} badge={badge}
+                      cardTemplate={cardTemplate} hiddenCardEls={cardHiddenByProduct[item.id] ?? []}
+                      cardTemplateMode={cardTemplateMode}
                       onSelect={(e) => { e.stopPropagation(); set({ selected: { type: 'product', id: item.id }, selectedFreeIds: [] }) }}
                       onDblName={(e) => { e.stopPropagation(); startEdit(item.id, 'name') }}
                       onDblDesc={(e) => { e.stopPropagation(); startEdit(item.id, 'desc') }}
@@ -265,6 +270,8 @@ export default function Canvas() {
                       {items.map((item) => (
                         <ProductCell
                           key={item.id} item={item} accent={accent} badge={badge}
+                          cardTemplate={cardTemplate} hiddenCardEls={cardHiddenByProduct[item.id] ?? []}
+                          cardTemplateMode={cardTemplateMode}
                           onSelect={(e) => { e.stopPropagation(); set({ selected: { type: 'product', id: item.id }, selectedFreeIds: [] }) }}
                           onDblName={(e) => { e.stopPropagation(); startEdit(item.id, 'name') }}
                           onDblDesc={(e) => { e.stopPropagation(); startEdit(item.id, 'desc') }}
@@ -314,6 +321,9 @@ interface ProductCellProps {
   item: ReturnType<typeof enrichItem>
   accent: string
   badge: string
+  cardTemplate: import('../../types').FreeElement[]
+  hiddenCardEls: string[]
+  cardTemplateMode: boolean
   onSelect: (e: React.MouseEvent) => void
   onDblName: (e: React.MouseEvent) => void
   onDblDesc: (e: React.MouseEvent) => void
@@ -333,7 +343,8 @@ interface ProductCellProps {
 }
 
 function ProductCell({
-  item, accent, badge: _badge, onSelect, onDblName, onDblDesc,
+  item, accent, badge: _badge, cardTemplate, hiddenCardEls, cardTemplateMode,
+  onSelect, onDblName, onDblDesc,
   onDblWas, onDblNow, onDblBodyText,
   onDragStart, onDragEnter, onDragEnd,
   onEditName, onEditDesc, onEditWas, onEditNow, onEditText,
@@ -354,8 +365,45 @@ function ProductCell({
       onDragOver={(e) => e.preventDefault()}
       onDragEnd={onDragEnd}
       className="sp-cell"
-      style={{ gridColumn: item.colSpan, border: item.border, borderRadius: item.cellRadius, overflow: 'hidden', background: item.cellBg, color: item.cellText, opacity: item.cellOpacity, cursor: 'grab', boxShadow: item.ringStyle, display: 'flex', flexDirection: item.cellDir, minHeight: 0 }}
+      style={{ gridColumn: item.colSpan, border: item.border, borderRadius: item.cellRadius, overflow: 'hidden', background: item.cellBg, color: item.cellText, opacity: item.cellOpacity, cursor: 'grab', boxShadow: item.ringStyle, display: 'flex', flexDirection: item.cellDir, minHeight: 0, position: 'relative' }}
     >
+      {/* Card template overlay */}
+      {cardTemplate.length > 0 && (
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 10, outline: cardTemplateMode ? '2px dashed #F7CC3A' : 'none' }}>
+          {cardTemplate.map((el) => {
+            if (hiddenCardEls.includes(el.id)) return null
+            const style: React.CSSProperties = {
+              position: 'absolute',
+              left: `${el.x}%`, top: `${el.y}%`,
+              width: `${el.w}%`, height: `${el.h}%`,
+              opacity: el.opacity,
+              zIndex: el.zIndex,
+            }
+            if (el.type === 'rect' || el.type === 'ellipse') {
+              return (
+                <div key={el.id} style={{ ...style, background: el.fill, borderRadius: el.type === 'ellipse' ? '50%' : 4, border: el.stroke !== 'none' ? `${el.strokeW}px solid ${el.stroke}` : 'none' }}>
+                  {el.text && <span style={{ fontSize: el.fontSize * 0.25, color: el.fontColor, padding: '0 4px' }}>{el.text}</span>}
+                </div>
+              )
+            }
+            if (el.type === 'text') {
+              return (
+                <div key={el.id} style={{ ...style, fontSize: el.fontSize * 0.25, fontWeight: el.bold ? 700 : 400, fontStyle: el.italic ? 'italic' : 'normal', color: el.fontColor, textAlign: el.textAlign, display: 'flex', alignItems: 'center', padding: '0 4px', lineHeight: 1.2 }}>
+                  {el.text}
+                </div>
+              )
+            }
+            if (el.type === 'image') {
+              return (
+                <div key={el.id} style={{ ...style, background: el.fill, border: el.stroke !== 'none' ? `${el.strokeW}px solid ${el.stroke}` : 'none', overflow: 'hidden' }}>
+                  {el.imageUrl && <img src={el.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: el.fit }} crossOrigin="anonymous" />}
+                </div>
+              )
+            }
+            return <div key={el.id} style={{ ...style, background: el.fill, borderRadius: 3 }} />
+          })}
+        </div>
+      )}
       {item.showTopStripe && <div style={{ height: 4, background: accent, flex: 'none' }} />}
       {item.showImage && (
         <div style={{ flex: item.imgFlex, background: item.imgBg, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: item.imgMinH, overflow: 'hidden' }}>

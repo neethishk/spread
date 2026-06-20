@@ -9,9 +9,10 @@ export default function RightPanel() {
     selected, template, gridKey, pageSize, orientation,
     accentKey, customAccent, badge, products, manualPages, banners, cover,
     pageElements, selectedFreeIds, freeElPageKey, pageGrids,
+    cardTemplate, cardHiddenByProduct,
     set, updateProduct, updateOv, duplicateProduct, removeProduct, moveProduct,
     updateFreeEl, deleteFreeEls, groupFreeEls, ungroupFreeEls,
-    setPageGrid, setManualGrid,
+    setPageGrid, setManualGrid, toggleCardElForProduct, deleteCardTemplateEls,
   } = useStore(useShallow((s) => ({
     selected: s.selected, template: s.template, gridKey: s.gridKey,
     pageSize: s.pageSize, orientation: s.orientation,
@@ -19,11 +20,14 @@ export default function RightPanel() {
     products: s.products, manualPages: s.manualPages, banners: s.banners, cover: s.cover,
     pageElements: s.pageElements, selectedFreeIds: s.selectedFreeIds, freeElPageKey: s.freeElPageKey,
     pageGrids: s.pageGrids,
+    cardTemplate: s.cardTemplate, cardHiddenByProduct: s.cardHiddenByProduct,
     set: s.set, updateProduct: s.updateProduct, updateOv: s.updateOv,
     duplicateProduct: s.duplicateProduct, removeProduct: s.removeProduct, moveProduct: s.moveProduct,
     updateFreeEl: s.updateFreeEl, deleteFreeEls: s.deleteFreeEls,
     groupFreeEls: s.groupFreeEls, ungroupFreeEls: s.ungroupFreeEls,
     setPageGrid: s.setPageGrid, setManualGrid: s.setManualGrid,
+    toggleCardElForProduct: s.toggleCardElForProduct,
+    deleteCardTemplateEls: s.deleteCardTemplateEls,
   })))
 
   const ac = computeAccent(accentKey, customAccent)
@@ -300,6 +304,34 @@ export default function RightPanel() {
                   )
                 })}
               </div>
+
+              {/* Card Template Elements */}
+              {cardTemplate.length > 0 && (
+                <div>
+                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: '1.5px', color: '#9A9182', marginBottom: 6 }}>CARD TEMPLATE</div>
+                  <div style={{ fontSize: 11.5, color: '#9A9182', marginBottom: 12, lineHeight: 1.45 }}>Toggle card template elements for this product only.</div>
+                  {cardTemplate.map((el) => {
+                    const hidden = (cardHiddenByProduct[id] ?? []).includes(el.id)
+                    return (
+                      <div key={el.id} onClick={() => toggleCardElForProduct(id, el.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', padding: '8px 0', borderBottom: '1px solid #EFEADF' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <div style={{ width: 20, height: 20, borderRadius: 5, background: el.fill === 'transparent' ? '#F0ECE3' : el.fill, border: '1px solid #ECE8DF', flex: 'none' }} />
+                          <span style={{ fontSize: 13, fontWeight: 600 }}>{el.text || el.type}</span>
+                        </div>
+                        <div style={{ width: 38, height: 22, borderRadius: 999, background: !hidden ? accent : '#D5CEC1', position: 'relative' }}>
+                          <div style={{ position: 'absolute', top: 2, left: swX(!hidden), width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left .15s' }} />
+                        </div>
+                      </div>
+                    )
+                  })}
+                  <button
+                    onClick={() => deleteCardTemplateEls(cardTemplate.map((e) => e.id))}
+                    style={{ marginTop: 10, width: '100%', border: '1px solid #FECACA', background: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: 600, padding: 8, borderRadius: 9, color: '#DC2626' }}
+                  >
+                    Clear card template
+                  </button>
+                </div>
+              )}
 
               {/* Layout */}
               <div>

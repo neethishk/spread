@@ -2,15 +2,17 @@ import { useStore } from '../../store'
 import { useShallow } from 'zustand/react/shallow'
 import { computeAccent, computePageDimensions, gridTokens } from './helpers'
 import { COMPONENT_TEMPLATES, COMPONENT_CATEGORIES, ACCENT_PLACEHOLDER, type ComponentTemplate } from './componentDefs'
-import type { FreeElement } from '../../types'
+import type { FreeElement, GridKey } from '../../types'
 
 export default function LeftPanel() {
   const {
     leftTab, products, manualPages, gridKey, pageSize, orientation, template,
     selected, dragId, pageDragId, banners,
     accentKey, customAccent,
-    activePageKey, pageElements,
+    activePageKey, pageElements, pageGrids,
+    cardTemplate, cardTemplateMode, cardHiddenByProduct, contentPageDragIdx,
     set, addDeal, addBlank, addBlankPage, removeManualPage, reorder, reorderManualPages, addFreeEl,
+    addCardTemplateEl, removeProductsInRange, moveProductRange,
   } = useStore(useShallow((s) => ({
     leftTab: s.leftTab, products: s.products, manualPages: s.manualPages,
     gridKey: s.gridKey, pageSize: s.pageSize,
@@ -18,24 +20,37 @@ export default function LeftPanel() {
     selected: s.selected, dragId: s.dragId, pageDragId: s.pageDragId,
     banners: s.banners,
     accentKey: s.accentKey, customAccent: s.customAccent,
-    activePageKey: s.activePageKey, pageElements: s.pageElements,
+    activePageKey: s.activePageKey, pageElements: s.pageElements, pageGrids: s.pageGrids,
+    cardTemplate: s.cardTemplate, cardTemplateMode: s.cardTemplateMode,
+    cardHiddenByProduct: s.cardHiddenByProduct, contentPageDragIdx: s.contentPageDragIdx,
     set: s.set, addDeal: s.addDeal, addBlank: s.addBlank, addBlankPage: s.addBlankPage,
     removeManualPage: s.removeManualPage, reorder: s.reorder, reorderManualPages: s.reorderManualPages,
-    addFreeEl: s.addFreeEl,
+    addFreeEl: s.addFreeEl, addCardTemplateEl: s.addCardTemplateEl,
+    removeProductsInRange: s.removeProductsInRange, moveProductRange: s.moveProductRange,
   })))
 
   const ac = computeAccent(accentKey, customAccent)
   const accent = ac.color
   const { pageH } = computePageDimensions(pageSize, orientation)
-  const gtk = gridTokens(gridKey, pageH, template)
 
-  // Build pages list for pageNav
-  const ban = banners[template] ?? { title: 'DEALS', sub: '' }
-  let contentPageCount = 0
-  let gi = 0
-  while (gi < products.length) { gi += gtk.perPage; contentPageCount++ }
-  if (contentPageCount === 0) contentPageCount = 1
+  // Compute content page ranges accurately (respects per-page grid overrides)
+  const pageRanges: Array<{ pIdx: number; startIdx: number; count: number }> = []
+  {
+    let gi = 0, pIdx = 0
+    while (gi < products.length) {
+      const gKey = (pageGrids[pIdx] as GridKey) ?? gridKey
+      const tk = gridTokens(gKey, pageH, template)
+      const count = Math.min(tk.perPage, products.length - gi)
+      pageRanges.push({ pIdx, startIdx: gi, count })
+      gi += tk.perPage; pIdx++
+    }
+  }
+  if (pageRanges.length === 0) pageRanges.push({ pIdx: 0, startIdx: 0, count: 0 })
+
+  const contentPageCount = pageRanges.length
   const totalPages = contentPageCount + 1 + manualPages.length
+
+  const ban = banners[template] ?? { title: 'DEALS', sub: '' }
 
   const jumpTo = (id: string) => {
     const canvas = document.getElementById('sp-canvas')
@@ -56,13 +71,38 @@ export default function LeftPanel() {
 
   const handleAddComponent = (comp: ComponentTemplate) => {
     const fill = comp.el.fill === ACCENT_PLACEHOLDER ? accent : comp.el.fill
+    const isBackground = comp.category === 'Backgrounds'
+
+    if (cardTemplateMode) {
+      const el: FreeElement = {
+        ...comp.el, fill,
+        id: 'ct' + Date.now(),
+        zIndex: isBackground ? 0 : (cardTemplate.length + 1),
+      }
+      addCardTemplateEl(el)
+      return
+    }
+
     const el: FreeElement = {
-      ...comp.el,
-      fill,
+      ...comp.el, fill,
       id: 'fe' + Date.now(),
-      zIndex: (pageElements[activePageKey]?.length ?? 0) + 1,
+      zIndex: isBackground ? 0 : (pageElements[activePageKey]?.length ?? 0) + 1,
     }
     addFreeEl(activePageKey, el)
+  }
+
+  const handleDeleteContentPage = (pIdx: number, startIdx: number, count: number) => {
+    if (!window.confirm(`Delete page ${pIdx + 1}? This removes ${count} product${count !== 1 ? 's' : ''} from your catalog.`)) return
+    removeProductsInRange(startIdx, count)
+  }
+
+  const handleContentPageDragEnter = (toPIdx: number) => {
+    const fromPIdx = contentPageDragIdx
+    if (fromPIdx === null || fromPIdx === toPIdx) return
+    const from = pageRanges[fromPIdx]
+    const to = pageRanges[toPIdx]
+    if (!from || !to) return
+    moveProductRange(from.startIdx, from.count, to.startIdx)
   }
 
   return (
@@ -160,7 +200,7 @@ export default function LeftPanel() {
             <span style={{ fontSize: 16, lineHeight: 1 }}>+</span> Add blank page
           </button>
           <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10.5, color: '#B7AE9E', marginBottom: 12, letterSpacing: '0.5px' }}>
-            DRAG BLANK PAGES TO REORDER · {totalPages} TOTAL
+            DRAG TO REORDER · {totalPages} TOTAL PAGES
           </div>
 
           {/* Cover */}
@@ -170,12 +210,23 @@ export default function LeftPanel() {
             onJump={() => jumpTo('sp-cover')} onDelete={null}
           />
 
-          {/* Content pages */}
-          {Array.from({ length: contentPageCount }, (_, i) => (
+          {/* Content pages — draggable, deletable */}
+          {pageRanges.map((pg) => (
             <PageNavItem
-              key={i} id={`sp-pg-${i}`} label={ban.title} pageNo={String(i + 1)} isCover={false} isManual={false}
-              draggable={false} dragOpacity={1} accent={accent}
-              onJump={() => jumpTo(`sp-pg-${i}`)} onDelete={null}
+              key={pg.pIdx}
+              id={`sp-pg-${pg.pIdx}`}
+              label={ban.title}
+              pageNo={String(pg.pIdx + 1)}
+              isCover={false}
+              isManual={false}
+              draggable
+              dragOpacity={contentPageDragIdx === pg.pIdx ? 0.45 : 1}
+              accent={accent}
+              onJump={() => jumpTo(`sp-pg-${pg.pIdx}`)}
+              onDelete={(e) => { e.stopPropagation(); handleDeleteContentPage(pg.pIdx, pg.startIdx, pg.count) }}
+              onDragStart={() => set({ contentPageDragIdx: pg.pIdx })}
+              onDragEnter={() => handleContentPageDragEnter(pg.pIdx)}
+              onDragEnd={() => set({ contentPageDragIdx: null })}
             />
           ))}
 
@@ -199,11 +250,58 @@ export default function LeftPanel() {
       {leftTab === 'elements' && (
         <div className="sp-scroll" style={{ flex: 1, overflow: 'auto', padding: '12px 12px' }}>
 
-          {/* Active page chip */}
-          <div style={{ background: accent + '18', border: `1px solid ${accent}44`, borderRadius: 9, padding: '7px 11px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 7, height: 7, borderRadius: '50%', background: accent, flex: 'none' }} />
-            <span style={{ fontSize: 11.5, fontWeight: 700, color: '#211D17', flex: 1 }}>Adding to: <span style={{ color: accent }}>{activePageLabel}</span></span>
+          {/* Mode toggle: Page vs Card */}
+          <div style={{ display: 'flex', background: '#F0ECE3', borderRadius: 10, padding: 3, marginBottom: 12 }}>
+            <button
+              onClick={() => set({ cardTemplateMode: false })}
+              style={{ flex: 1, border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: 700, padding: '7px 4px', borderRadius: 8, background: !cardTemplateMode ? '#fff' : 'transparent', color: !cardTemplateMode ? '#211D17' : '#9A9182' }}
+            >
+              Page
+            </button>
+            <button
+              onClick={() => set({ cardTemplateMode: true })}
+              style={{ flex: 1, border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: 700, padding: '7px 4px', borderRadius: 8, background: cardTemplateMode ? '#fff' : 'transparent', color: cardTemplateMode ? '#211D17' : '#9A9182' }}
+            >
+              Card Template
+            </button>
           </div>
+
+          {/* Active context chip */}
+          {cardTemplateMode ? (
+            <div style={{ background: '#F7CC3A22', border: '1px solid #F7CC3A88', borderRadius: 9, padding: '7px 11px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#D4A500', flex: 'none' }} />
+              <span style={{ fontSize: 11.5, fontWeight: 700, color: '#211D17', flex: 1 }}>
+                Adding to: <span style={{ color: '#D4A500' }}>All Product Cards</span>
+              </span>
+              {cardTemplate.length > 0 && (
+                <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, color: '#9A9182', background: '#F0ECE3', padding: '2px 6px', borderRadius: 5 }}>{cardTemplate.length} els</span>
+              )}
+            </div>
+          ) : (
+            <div style={{ background: accent + '18', border: `1px solid ${accent}44`, borderRadius: 9, padding: '7px 11px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 7, height: 7, borderRadius: '50%', background: accent, flex: 'none' }} />
+              <span style={{ fontSize: 11.5, fontWeight: 700, color: '#211D17', flex: 1 }}>Adding to: <span style={{ color: accent }}>{activePageLabel}</span></span>
+            </div>
+          )}
+
+          {/* Card template element list */}
+          {cardTemplateMode && cardTemplate.length > 0 && (
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 9.5, color: '#B7AE9E', letterSpacing: '1.5px', marginBottom: 8, paddingLeft: 2 }}>CARD ELEMENTS</div>
+              {cardTemplate.map((el) => {
+                const hiddenCount = Object.values(cardHiddenByProduct).filter((ids) => ids.includes(el.id)).length
+                return (
+                  <div key={el.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 9px', borderRadius: 9, background: '#fff', boxShadow: '0 0 0 1px #ECE8DF', marginBottom: 5 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: 6, background: el.fill === 'transparent' ? '#F0ECE3' : el.fill, flex: 'none', border: '1px solid #ECE8DF' }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{el.text || el.type}</div>
+                      <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 9.5, color: '#9A9182' }}>{el.type.toUpperCase()}{hiddenCount > 0 ? ` · hidden on ${hiddenCount}` : ''}</div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
 
           {/* Component categories */}
           {COMPONENT_CATEGORIES.map((cat) => {
@@ -265,7 +363,7 @@ function PageNavItem({ label, pageNo, isCover, isManual, draggable, dragOpacity,
       onDragOver={(e) => e.preventDefault()}
       onDragEnd={onDragEnd}
       onClick={onJump}
-      style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 8, borderRadius: 11, cursor: isManual ? 'grab' : 'pointer', background: '#fff', boxShadow: '0 0 0 1px #ECE8DF', marginBottom: 9, opacity: dragOpacity }}
+      style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 8, borderRadius: 11, cursor: (isManual || draggable) ? 'grab' : 'pointer', background: '#fff', boxShadow: '0 0 0 1px #ECE8DF', marginBottom: 9, opacity: dragOpacity }}
     >
       <div style={{ width: 42, height: 58, flex: 'none', borderRadius: 4, overflow: 'hidden', background: '#fff', boxShadow: '0 1px 4px rgba(33,29,23,.15)', position: 'relative' }}>
         {isCover && <div style={{ position: 'absolute', inset: 0, background: accent }} />}
@@ -276,7 +374,7 @@ function PageNavItem({ label, pageNo, isCover, isManual, draggable, dragOpacity,
         <div style={{ fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</div>
         <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10.5, color: '#9A9182', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Page {pageNo}</div>
       </div>
-      {isManual && onDelete && (
+      {onDelete && (
         <button onClick={onDelete} title="Delete page" style={{ border: 'none', background: '#F0ECE3', cursor: 'pointer', width: 24, height: 24, borderRadius: 7, color: '#9A9182', fontSize: 12, flex: 'none' }}>✕</button>
       )}
     </div>
@@ -287,7 +385,20 @@ function ComponentPreview({ comp, accent }: { comp: ComponentTemplate; accent: s
   const fill = comp.el.fill === ACCENT_PLACEHOLDER ? accent : comp.el.fill
   const isCircle = comp.el.type === 'badge' || comp.el.type === 'sticker' || comp.el.type === 'ellipse'
   const isDivider = comp.id === 'divider'
+  const isBackground = comp.category === 'Backgrounds'
   const H = 56
+
+  if (isBackground) {
+    return (
+      <div style={{ width: '100%', height: H, background: fill, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+        {comp.el.type === 'image' ? (
+          <span style={{ fontSize: 18, opacity: 0.5 }}>🖼</span>
+        ) : (
+          <div style={{ fontSize: 9, fontFamily: "'Space Mono', monospace", color: fill === '#211D17' ? '#fff' : '#9A9182', letterSpacing: '1px', opacity: 0.6 }}>BG</div>
+        )}
+      </div>
+    )
+  }
 
   if (isDivider) {
     return (
