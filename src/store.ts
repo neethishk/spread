@@ -1,6 +1,9 @@
 import { create } from 'zustand'
 import { supabase } from './lib/supabase'
 import { makeProducts, SAMPLE_PROJECTS, DEFAULT_BANNERS, ZOOMS } from './constants'
+import { exportPDF } from './utils/pdfExport'
+import { exportIDML } from './utils/idmlExport'
+import { computeAccent } from './pages/editor/helpers'
 import type {
   Screen, Template, GridKey, PageSize, Orientation,
   Product, ManualPage, Cover, BannerDef, Project, Selection,
@@ -62,6 +65,7 @@ interface AppState {
   saveProject: () => Promise<void>
   deleteProject: (id: string) => Promise<void>
   startProcessing: () => void
+  loadCSV: (products: Product[]) => void
   addDeal: () => void
   addBlank: () => void
   addBlankPage: () => void
@@ -84,7 +88,7 @@ interface AppState {
   redo: () => void
   zoomStep: (dir: 1 | -1) => void
   findAnyProduct: (id: string) => Product | undefined
-  generateExport: () => void
+  generateExport: () => Promise<void>
   set: (patch: Partial<AppState>) => void
 }
 
@@ -102,7 +106,7 @@ export const useStore = create<AppState>((set, get) => ({
   template: 'promo',
   accentKey: 'red',
   customAccent: '#0EA5A0',
-  badge: 'oklch(0.86 0.16 92)',
+  badge: '#F7CC3A',
   gridKey: '3x3',
   pageSize: 'a4',
   orientation: 'portrait',
@@ -155,13 +159,13 @@ export const useStore = create<AppState>((set, get) => ({
     if (isSignup) {
       const { error } = await supabase.auth.signUp({ email, password })
       if (error) return error.message
-      set({ loggedIn: true, screen: 'projects' })
+      set({ loggedIn: true, screen: 'csvUpload' })
       await get().loadProjects()
       return null
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) return error.message
-      set({ loggedIn: true, screen: 'projects' })
+      set({ loggedIn: true, screen: 'csvUpload' })
       await get().loadProjects()
       return null
     }
@@ -177,7 +181,7 @@ export const useStore = create<AppState>((set, get) => ({
     set({ screen: 'projects' })
   },
 
-  newProject: () => set({ screen: 'upload', activeProjectId: null }),
+  newProject: () => set({ screen: 'csvUpload', activeProjectId: null }),
 
   openProject: (id) => {
     const p = get().projects.find((x) => x.id === id)
@@ -243,7 +247,7 @@ export const useStore = create<AppState>((set, get) => ({
       const id = user ? String(Date.now()) : ('pr' + Date.now())
       const np: Project = {
         id, name: 'Untitled catalog', store: 'YOUR STORE', accent: 'oklch(0.57 0.2 25)',
-        badge: 'oklch(0.86 0.16 92)', template: 'promo', gridKey: '3x3', pageSize: 'a4',
+        badge: '#F7CC3A', template: 'promo', gridKey: '3x3', pageSize: 'a4',
         dealCount: 32, updated: 'Just now', headline1: 'WEEKEND', headline2: 'DEALS', burst: 'UP TO 60% OFF',
       }
       if (user) {
@@ -481,8 +485,45 @@ export const useStore = create<AppState>((set, get) => ({
     set((s) => ({ manualPages: s.manualPages.filter((m) => m.id !== id) }))
   },
 
-  generateExport: () => {
+  loadCSV: (products) => {
+    set({
+      screen: 'editor',
+      products,
+      manualPages: [],
+      pageGrids: {},
+      selected: null,
+      editingId: null,
+      history: [],
+      future: [],
+      leftTab: 'deals',
+      catalogName: 'My Catalog',
+      accentKey: 'red',
+      template: 'promo',
+      gridKey: products.length > 18 ? '4x4' : products.length > 9 ? '3x3' : '2x2',
+    })
+  },
+
+  generateExport: async () => {
+    const s = get()
     set({ exportStage: 'generating' })
-    setTimeout(() => set({ exportStage: 'ready' }), 1900)
+    try {
+      if (s.exportFormat === 'pdf') {
+        await exportPDF(s.bleed, (pct) => {
+          if (pct === 100) set({ exportStage: 'ready' })
+        })
+        set({ exportStage: 'ready' })
+      } else {
+        const ac = computeAccent(s.accentKey, s.customAccent)
+        await exportIDML(
+          s.products, s.cover, s.banners, s.template, s.gridKey,
+          s.pageSize, s.orientation, s.catalogName, ac.color,
+        )
+        set({ exportStage: 'ready' })
+      }
+    } catch (e) {
+      console.error('Export error:', e)
+      set({ exportStage: 'config' })
+      alert('Export failed: ' + (e instanceof Error ? e.message : String(e)))
+    }
   },
 }))

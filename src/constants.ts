@@ -10,12 +10,12 @@ export const ACCENTS: Record<string, { name: string; color: string; soft: string
 }
 
 export const PALETTES = [
-  { key: 'classic',  name: 'Hyper Classic', accent: 'oklch(0.57 0.2 25)',   badge: 'oklch(0.86 0.16 92)' },
-  { key: 'sunset',   name: 'Sunset',        accent: 'oklch(0.65 0.18 50)',   badge: 'oklch(0.83 0.15 85)' },
-  { key: 'orchard',  name: 'Orchard',       accent: 'oklch(0.52 0.14 152)',  badge: 'oklch(0.86 0.16 92)' },
-  { key: 'cobalt',   name: 'Cobalt',        accent: 'oklch(0.5 0.16 252)',   badge: 'oklch(0.8 0.14 78)' },
-  { key: 'berry',    name: 'Berry',         accent: 'oklch(0.55 0.21 358)',  badge: 'oklch(0.84 0.14 92)' },
-  { key: 'midnight', name: 'Midnight',      accent: 'oklch(0.42 0.12 280)',  badge: 'oklch(0.82 0.16 95)' },
+  { key: 'classic',  name: 'Hyper Classic', accent: 'oklch(0.57 0.2 25)',   badge: '#F7CC3A' },
+  { key: 'sunset',   name: 'Sunset',        accent: 'oklch(0.65 0.18 50)',   badge: '#F4BF3F' },
+  { key: 'orchard',  name: 'Orchard',       accent: 'oklch(0.52 0.14 152)',  badge: '#F7CC3A' },
+  { key: 'cobalt',   name: 'Cobalt',        accent: 'oklch(0.5 0.16 252)',   badge: '#EFB146' },
+  { key: 'berry',    name: 'Berry',         accent: 'oklch(0.55 0.21 358)',  badge: '#F5C83C' },
+  { key: 'midnight', name: 'Midnight',      accent: 'oklch(0.42 0.12 280)',  badge: '#E4C226' },
 ]
 
 export const PRICING_TIERS = [
@@ -25,9 +25,9 @@ export const PRICING_TIERS = [
 ]
 
 export const TAGCOL: Record<string, string> = {
-  green: 'oklch(0.55 0.14 150)',
-  violet: 'oklch(0.55 0.17 305)',
-  blue: 'oklch(0.52 0.16 252)',
+  green: '#1C8742',
+  violet: '#8951C0',
+  blue: '#0069C1',
 }
 
 export const SIZES: Record<PageSize, { label: string; long: number; ratio: number }> = {

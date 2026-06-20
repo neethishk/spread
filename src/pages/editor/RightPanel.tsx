@@ -1,4 +1,5 @@
 import { useStore } from '../../store'
+import { useShallow } from 'zustand/react/shallow'
 import { computeAccent, computePageDimensions, gridTokens, ring, swX } from './helpers'
 import { ACCENTS, PALETTES, TPL_DEFS, GRIDS, SIZES, TAGCOL } from '../../constants'
 import type { GridKey } from '../../types'
@@ -8,14 +9,14 @@ export default function RightPanel() {
     selected, template, gridKey, pageSize, orientation,
     accentKey, customAccent, badge, products, manualPages, banners, cover,
     set, updateProduct, updateOv, duplicateProduct, removeProduct, moveProduct,
-  } = useStore((s) => ({
+  } = useStore(useShallow((s) => ({
     selected: s.selected, template: s.template, gridKey: s.gridKey,
     pageSize: s.pageSize, orientation: s.orientation,
     accentKey: s.accentKey, customAccent: s.customAccent, badge: s.badge,
     products: s.products, manualPages: s.manualPages, banners: s.banners, cover: s.cover,
     set: s.set, updateProduct: s.updateProduct, updateOv: s.updateOv,
     duplicateProduct: s.duplicateProduct, removeProduct: s.removeProduct, moveProduct: s.moveProduct,
-  }))
+  })))
 
   const ac = computeAccent(accentKey, customAccent)
   const accent = ac.color
@@ -164,6 +165,20 @@ export default function RightPanel() {
                 <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: '#9A9182' }}>{customAccent}</div>
               </div>
             </div>
+            <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 11, background: '#fff', borderRadius: 11, padding: '10px 12px', boxShadow: '0 0 0 1px #E4DFD5' }}>
+              <label style={{ position: 'relative', width: 34, height: 34, flex: 'none', borderRadius: 9, overflow: 'hidden', cursor: 'pointer', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.1)' }}>
+                <span style={{ position: 'absolute', inset: 0, background: badge }} />
+                <input
+                  type="color" value={badge}
+                  onChange={(e) => set({ badge: e.target.value })}
+                  style={{ position: 'absolute', top: -6, left: -6, width: 48, height: 48, border: 'none', padding: 0, background: 'none', cursor: 'pointer' }}
+                />
+              </label>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 700, fontSize: 13 }}>Badge &amp; burst color</div>
+                <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: '#9A9182' }}>{badge}</div>
+              </div>
+            </div>
             <div style={{ marginTop: 12, fontFamily: "'Space Mono', monospace", fontSize: 11, color: '#6B645A' }}>{ac.name}</div>
           </div>
 
@@ -299,10 +314,14 @@ export default function RightPanel() {
               <div>
                 <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: '1.5px', color: '#9A9182', marginBottom: 12 }}>APPEARANCE</div>
                 <label style={{ fontSize: 11.5, fontWeight: 700, color: '#6B645A', display: 'block', marginBottom: 8 }}>Cell background</label>
-                <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
                   {bgs.map((b) => (
-                    <div key={b.key} onClick={() => updateOv(id, { bg: b.key as any })} title={b.label} style={{ flex: 1, aspectRatio: '1', borderRadius: 8, cursor: 'pointer', background: b.sw, border: '1px solid #ECE8DF', boxShadow: curBg === b.key ? `0 0 0 2px #FBF9F4, 0 0 0 4px ${accent}` : '0 0 0 1px #E4DFD5' }} />
+                    <div key={b.key} onClick={() => updateOv(id, { bg: b.key as any })} title={b.label} style={{ width: 32, height: 32, borderRadius: 8, cursor: 'pointer', background: b.sw, border: '1px solid #ECE8DF', boxShadow: curBg === b.key ? `0 0 0 2px #FBF9F4, 0 0 0 4px ${accent}` : '0 0 0 1px #E4DFD5' }} />
                   ))}
+                  <label title="Custom color" style={{ position: 'relative', width: 32, height: 32, flex: 'none', borderRadius: 8, overflow: 'hidden', cursor: 'pointer', boxShadow: curBg === 'custom' ? `0 0 0 2px #FBF9F4, 0 0 0 4px ${accent}` : '0 0 0 1px #E4DFD5' }}>
+                    <span style={{ position: 'absolute', inset: 0, background: ov.customBg ?? '#ffffff' }} />
+                    <input type="color" value={ov.customBg ?? '#ffffff'} onChange={(e) => updateOv(id, { bg: 'custom', customBg: e.target.value })} style={{ position: 'absolute', top: -6, left: -6, width: 50, height: 50, border: 'none', padding: 0, cursor: 'pointer', opacity: 0 }} />
+                  </label>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                   <label style={{ fontSize: 11.5, fontWeight: 700, color: '#6B645A' }}>Corner radius</label>
@@ -338,11 +357,15 @@ export default function RightPanel() {
                       <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: '#9A9182' }}>{ov.borderW ?? 2}px</span>
                     </div>
                     <input type="range" min="1" max="6" value={ov.borderW ?? 2} onChange={(e) => updateOv(id, { borderW: parseInt(e.target.value) })} style={{ width: '100%', accentColor: accent, marginBottom: 12 }} />
-                    <div style={{ display: 'flex', gap: 9 }}>
+                    <div style={{ display: 'flex', gap: 9, alignItems: 'center' }}>
                       {[accent, '#211D17', '#B7AE9E'].map((col) => {
                         const cur = ov.borderColor ?? accent
                         return <div key={col} onClick={() => updateOv(id, { borderColor: col })} style={{ width: 30, height: 30, borderRadius: '50%', cursor: 'pointer', background: col, boxShadow: cur === col ? `0 0 0 2px #FBF9F4, 0 0 0 4px ${col}` : '0 0 0 1px #E4DFD5' }} />
                       })}
+                      <label title="Custom color" style={{ position: 'relative', width: 30, height: 30, flex: 'none', borderRadius: '50%', overflow: 'hidden', cursor: 'pointer', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.12)' }}>
+                        <span style={{ position: 'absolute', inset: 0, background: (ov.borderColor?.startsWith('#') ? ov.borderColor : '#888888'), borderRadius: '50%' }} />
+                        <input type="color" value={ov.borderColor?.startsWith('#') ? ov.borderColor : '#888888'} onChange={(e) => updateOv(id, { borderColor: e.target.value })} style={{ position: 'absolute', top: -6, left: -6, width: 44, height: 44, border: 'none', padding: 0, cursor: 'pointer', opacity: 0 }} />
+                      </label>
                     </div>
                   </>
                 )}
@@ -359,7 +382,7 @@ export default function RightPanel() {
                     updateProduct(id, { tag: v ? { t: v, col: sp.tag?.col ?? 'green' } : null })
                   }}
                 />
-                <div style={{ display: 'flex', gap: 9, marginTop: 12 }}>
+                <div style={{ display: 'flex', gap: 9, marginTop: 12, alignItems: 'center' }}>
                   {(['green', 'violet', 'blue'] as const).map((ck) => {
                     const col = TAGCOL[ck]
                     return (
@@ -370,6 +393,10 @@ export default function RightPanel() {
                       />
                     )
                   })}
+                  <label title="Custom color" style={{ position: 'relative', width: 30, height: 30, flex: 'none', borderRadius: '50%', overflow: 'hidden', cursor: 'pointer', boxShadow: sp.tag?.col === 'custom' ? `0 0 0 2px #FBF9F4, 0 0 0 4px ${sp.tag?.customCol ?? '#666'}` : '0 0 0 1px #E4DFD5' }}>
+                    <span style={{ position: 'absolute', inset: 0, background: sp.tag?.customCol ?? '#666666', borderRadius: '50%' }} />
+                    <input type="color" value={sp.tag?.customCol ?? '#666666'} onChange={(e) => updateProduct(id, { tag: { t: sp.tag?.t ?? 'NEW', col: 'custom', customCol: e.target.value } })} style={{ position: 'absolute', top: -6, left: -6, width: 44, height: 44, border: 'none', padding: 0, cursor: 'pointer', opacity: 0 }} />
+                  </label>
                 </div>
               </div>
 
@@ -388,7 +415,7 @@ export default function RightPanel() {
 
               <div style={{ display: 'flex', gap: 10 }}>
                 <button onClick={() => duplicateProduct(id)} style={{ flex: 1, border: '1px solid #E0DACE', background: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, padding: 11, borderRadius: 10 }}>Duplicate</button>
-                <button onClick={() => removeProduct(id)} style={{ flex: 1, border: '1px solid oklch(0.8 0.09 25)', background: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, padding: 11, borderRadius: 10, color: 'oklch(0.55 0.2 25)' }}>Delete</button>
+                <button onClick={() => removeProduct(id)} style={{ flex: 1, border: '1px solid #FECACA', background: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, padding: 11, borderRadius: 10, color: '#DC2626' }}>Delete</button>
               </div>
             </div>
           </>

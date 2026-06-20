@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { useStore } from '../store'
+import { useShallow } from 'zustand/react/shallow'
 
 const accent = 'oklch(0.57 0.2 25)'
 
 export default function Auth() {
-  const { screen, goHome, toggleAuthMode, doAuth } = useStore((s) => ({
+  const { screen, goHome, toggleAuthMode, doAuth } = useStore(useShallow((s) => ({
     screen: s.screen, goHome: s.goHome, toggleAuthMode: s.toggleAuthMode, doAuth: s.doAuth,
-  }))
+  })))
   const isSignup = screen === 'signup'
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')

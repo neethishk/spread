@@ -1,4 +1,5 @@
 import { useStore } from '../../store'
+import { useShallow } from 'zustand/react/shallow'
 import { computeAccent, computePageDimensions, gridTokens } from './helpers'
 
 export default function LeftPanel() {
@@ -7,7 +8,7 @@ export default function LeftPanel() {
     selected, dragId, pageDragId, banners,
     accentKey, customAccent,
     set, addDeal, addBlank, addBlankPage, removeManualPage, reorder, reorderManualPages,
-  } = useStore((s) => ({
+  } = useStore(useShallow((s) => ({
     leftTab: s.leftTab, products: s.products, manualPages: s.manualPages,
     gridKey: s.gridKey, pageSize: s.pageSize,
     orientation: s.orientation, template: s.template,
@@ -16,7 +17,7 @@ export default function LeftPanel() {
     accentKey: s.accentKey, customAccent: s.customAccent,
     set: s.set, addDeal: s.addDeal, addBlank: s.addBlank, addBlankPage: s.addBlankPage,
     removeManualPage: s.removeManualPage, reorder: s.reorder, reorderManualPages: s.reorderManualPages,
-  }))
+  })))
 
   const ac = computeAccent(accentKey, customAccent)
   const accent = ac.color

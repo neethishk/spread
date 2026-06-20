@@ -1,4 +1,5 @@
 import { useStore } from '../../store'
+import { useShallow } from 'zustand/react/shallow'
 import { computeAccent, computePageDimensions, ring, swX, gridTokens } from './helpers'
 
 export default function ExportModal() {
@@ -7,7 +8,7 @@ export default function ExportModal() {
     products, manualPages, pageSize, orientation, gridKey,
     accentKey, customAccent, catalogName, template,
     set, generateExport,
-  } = useStore((s) => ({
+  } = useStore(useShallow((s) => ({
     exportOpen: s.exportOpen, exportFormat: s.exportFormat,
     exportStage: s.exportStage, bleed: s.bleed,
     products: s.products, manualPages: s.manualPages,
@@ -15,7 +16,7 @@ export default function ExportModal() {
     accentKey: s.accentKey, customAccent: s.customAccent,
     catalogName: s.catalogName, template: s.template,
     set: s.set, generateExport: s.generateExport,
-  }))
+  })))
 
   if (!exportOpen) return null
 
@@ -114,14 +115,16 @@ export default function ExportModal() {
         {exportStage === 'ready' && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '18px 0' }}>
             <div style={{ width: 56, height: 56, borderRadius: '50%', background: accent, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>✓</div>
-            <div style={{ fontFamily: "'Instrument Serif', serif", fontSize: 30 }}>Your booklet is ready</div>
+            <div style={{ fontFamily: "'Instrument Serif', serif", fontSize: 30 }}>Your file has downloaded</div>
             <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, color: '#6B645A', background: '#fff', border: '1px solid #EFEADF', padding: '10px 16px', borderRadius: 10 }}>
               {fileName}
             </div>
-            <button style={{ border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14, fontWeight: 700, padding: '13px 28px', borderRadius: 10, background: '#211D17', color: '#F6F3ED', marginTop: 4 }}>
-              Download {formatLabel}
-            </button>
-            <button onClick={closeExport} style={{ border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, color: '#9A9182' }}>
+            <div style={{ fontSize: 13, color: '#9A9182', textAlign: 'center', maxWidth: 320 }}>
+              {exportFormat === 'pdf'
+                ? 'Check your downloads folder for the PDF.'
+                : 'Open the .idml file in Adobe InDesign CC 2024 or later.'}
+            </div>
+            <button onClick={closeExport} style={{ border: 'none', background: '#211D17', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14, fontWeight: 700, padding: '13px 28px', borderRadius: 10, color: '#F6F3ED', marginTop: 4 }}>
               Back to editor
             </button>
           </div>

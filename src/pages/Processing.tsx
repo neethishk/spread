@@ -1,4 +1,5 @@
 import { useStore } from '../store'
+import { useShallow } from 'zustand/react/shallow'
 
 const accent = 'oklch(0.57 0.2 25)'
 
@@ -15,7 +16,7 @@ function stripeBg() {
 }
 
 export default function Processing() {
-  const { procStep, procCount } = useStore((s) => ({ procStep: s.procStep, procCount: s.procCount }))
+  const { procStep, procCount } = useStore(useShallow((s) => ({ procStep: s.procStep, procCount: s.procCount })))
 
   const procText = PROC_TEXTS[procStep] ?? PROC_TEXTS[0]
   const procPct = Math.round(((procStep + 1) / 5) * 100) + '%'

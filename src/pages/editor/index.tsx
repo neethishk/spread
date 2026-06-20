@@ -1,4 +1,5 @@
 import { useStore } from '../../store'
+import { useShallow } from 'zustand/react/shallow'
 import { computeAccent, computePageDimensions, gridTokens } from './helpers'
 import { TOOL_DEFS, ZOOMS } from '../../constants'
 import LeftPanel from './LeftPanel'
@@ -12,14 +13,14 @@ export default function Editor() {
     products, manualPages, pageSize, orientation, gridKey, template,
     accentKey, customAccent, selected, history, future,
     set, zoomStep, undo, redo, goProjects,
-  } = useStore((s) => ({
+  } = useStore(useShallow((s) => ({
     tool: s.tool, zoom: s.zoom, showRulers: s.showRulers, showGuides: s.showGuides,
     catalogName: s.catalogName, products: s.products, manualPages: s.manualPages,
     pageSize: s.pageSize, orientation: s.orientation,
     gridKey: s.gridKey, template: s.template, accentKey: s.accentKey,
     customAccent: s.customAccent, selected: s.selected, history: s.history, future: s.future,
     set: s.set, zoomStep: s.zoomStep, undo: s.undo, redo: s.redo, goProjects: s.goProjects,
-  }))
+  })))
 
   const ac = computeAccent(accentKey, customAccent)
   const accent = ac.color

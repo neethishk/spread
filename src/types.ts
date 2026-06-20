@@ -1,4 +1,4 @@
-export type Screen = 'upload' | 'pricing' | 'signin' | 'signup' | 'projects' | 'processing' | 'editor'
+export type Screen = 'upload' | 'pricing' | 'signin' | 'signup' | 'projects' | 'processing' | 'editor' | 'csvUpload'
 export type Template = 'promo' | 'mega' | 'clean' | 'bomb' | 'spec' | 'custom'
 export type GridKey = '2x2' | '2x3' | '3x3' | '3x4' | '4x4'
 export type PageSize = 'a5' | 'a4' | 'a3' | 'letter' | 'square'
@@ -7,10 +7,11 @@ export type AccentKey = 'red' | 'orange' | 'magenta' | 'green' | 'blue' | 'purpl
 export type ExportFormat = 'pdf' | 'indd'
 export type ExportStage = 'config' | 'generating' | 'ready'
 
-export interface Tag { t: string; col: 'green' | 'violet' | 'blue' }
+export interface Tag { t: string; col: 'green' | 'violet' | 'blue' | 'custom'; customCol?: string }
 
 export interface ProductOverride {
-  bg?: 'default' | 'white' | 'cream' | 'tint' | 'accent'
+  bg?: 'default' | 'white' | 'cream' | 'tint' | 'accent' | 'custom'
+  customBg?: string
   imgPos?: 'top' | 'left'
   pad?: 0 | 1 | 2 | 4
   span2?: boolean
@@ -32,6 +33,7 @@ export interface Product {
   category: string
   was: number
   now: number
+  imageUrl?: string
   tag: Tag | null
   align: 'left' | 'center' | 'right'
   text: string

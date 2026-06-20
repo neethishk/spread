@@ -1,4 +1,5 @@
 import { useStore } from '../../store'
+import { useShallow } from 'zustand/react/shallow'
 import { computeAccent, computePageDimensions, gridTokens, enrichItem } from './helpers'
 import type { GridKey } from '../../types'
 import { GRIDS } from '../../constants'
@@ -10,7 +11,7 @@ export default function Canvas() {
     cover, banners, badge, accentKey, customAccent,
     selected, editingId, dragId,
     set, stopEdit, liveProduct, startEdit, setPageGrid, setManualGrid, addDealToPage, reorder,
-  } = useStore((s) => ({
+  } = useStore(useShallow((s) => ({
     showRulers: s.showRulers, showGuides: s.showGuides, zoom: s.zoom,
     pageSize: s.pageSize, orientation: s.orientation, template: s.template,
     products: s.products, manualPages: s.manualPages, pageGrids: s.pageGrids, gridKey: s.gridKey,
@@ -20,7 +21,7 @@ export default function Canvas() {
     set: s.set, stopEdit: s.stopEdit, liveProduct: s.liveProduct,
     startEdit: s.startEdit, setPageGrid: s.setPageGrid, setManualGrid: s.setManualGrid,
     addDealToPage: s.addDealToPage, reorder: s.reorder,
-  }))
+  })))
 
   const ac = computeAccent(accentKey, customAccent)
   const accent = ac.color
@@ -285,8 +286,11 @@ function ProductCell({ item, accent, badge, onSelect, onDblName, onDblDesc, onDr
     >
       {item.showTopStripe && <div style={{ height: 4, background: accent, flex: 'none' }} />}
       {item.showImage && (
-        <div style={{ flex: item.imgFlex, background: item.imgBg, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: item.imgMinH }}>
-          <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 8, color: '#B7AE9E', letterSpacing: '1px' }}>{item.imgLabel}</span>
+        <div style={{ flex: item.imgFlex, background: item.imgBg, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: item.imgMinH, overflow: 'hidden' }}>
+          {item.imageUrl
+            ? <img src={item.imageUrl} alt={item.name} crossOrigin="anonymous" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+            : <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 8, color: '#B7AE9E', letterSpacing: '1px' }}>{item.imgLabel}</span>
+          }
           {item.showBadge && (
             <div style={{ position: 'absolute', top: 6, right: 6, width: item.saveDim, height: item.saveDim, borderRadius: '50%', background: badge, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', lineHeight: 1, boxShadow: '0 2px 6px rgba(33,29,23,.2)' }}>
               <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: item.saveLblF, color: '#211D17' }}>SAVE</span>

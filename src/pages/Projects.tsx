@@ -1,12 +1,13 @@
 import { useStore } from '../store'
+import { useShallow } from 'zustand/react/shallow'
 
 const accent = 'oklch(0.57 0.2 25)'
 
 export default function Projects() {
-  const { projects, goPricing, signOut, newProject, openProject, user } = useStore((s) => ({
+  const { projects, goPricing, signOut, newProject, openProject, user } = useStore(useShallow((s) => ({
     projects: s.projects, goPricing: s.goPricing, signOut: s.signOut,
     newProject: s.newProject, openProject: s.openProject, user: s.user,
-  }))
+  })))
 
   const initial = user?.email?.[0]?.toUpperCase() ?? 'A'
 

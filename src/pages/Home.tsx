@@ -1,12 +1,18 @@
 import { useStore } from '../store'
+import { useShallow } from 'zustand/react/shallow'
 
 const SOURCES = ['CSV', 'Excel', 'Shopify', 'Airtable', 'PIM feed']
 
 export default function Home() {
-  const { goHome, goPricing, goSignin, goSignup, goProjects, startProcessing, loggedIn } = useStore((s) => ({
+  const { goHome, goPricing, goSignin, goSignup, goProjects, loggedIn, set } = useStore(useShallow((s) => ({
     goHome: s.goHome, goPricing: s.goPricing, goSignin: s.goSignin, goSignup: s.goSignup,
-    goProjects: s.goProjects, startProcessing: s.startProcessing, loggedIn: s.loggedIn,
-  }))
+    goProjects: s.goProjects, loggedIn: s.loggedIn, set: s.set,
+  })))
+
+  const handleUpload = () => {
+    if (loggedIn) set({ screen: 'csvUpload' })
+    else goSignin()
+  }
 
   const accent = 'oklch(0.57 0.2 25)'
 
@@ -47,7 +53,7 @@ export default function Home() {
 
           {/* Drop zone */}
           <div
-            onClick={startProcessing}
+            onClick={handleUpload}
             className="sp-up"
             style={{ cursor: 'pointer', width: 'min(620px, 92vw)', border: '2px dashed #CFC8BA', borderRadius: 24, background: '#FBF9F4', padding: 42, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 15 }}
           >
@@ -59,7 +65,7 @@ export default function Home() {
             </div>
           </div>
 
-          <button onClick={startProcessing} style={{ marginTop: 28, background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 15, color: '#211D17', fontWeight: 600, borderBottom: '2px solid ' + accent, padding: '0 0 3px' }}>
+          <button onClick={handleUpload} style={{ marginTop: 28, background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 15, color: '#211D17', fontWeight: 600, borderBottom: '2px solid ' + accent, padding: '0 0 3px' }}>
             Try it with a sample hypermarket booklet →
           </button>
 

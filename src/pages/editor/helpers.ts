@@ -121,6 +121,7 @@ export interface EnrichedProduct extends Product {
   tagText: string
   tagBg: string
   ringStyle: string
+  imageUrl: string | undefined
   cellDraggable: boolean
   dragOpacity: string
   nameF: number
@@ -183,6 +184,7 @@ export function enrichItem(
   if (ov.bg === 'white') cellBg = '#fff'
   else if (ov.bg === 'cream') cellBg = '#FBF6EC'
   else if (ov.bg === 'tint') cellBg = ac.soft
+  else if (ov.bg === 'custom') cellBg = ov.customBg ?? '#fff'
 
   const invert = ov.bg === 'accent'
   if (invert) {
@@ -246,8 +248,10 @@ export function enrichItem(
     showDiscountRow: fDiscount && hasWas && Number(p.was) > Number(p.now) && hasNow,
     showBadge: p.showBadge !== false && savePct > 0 && fImage,
     showChips: tpl === 'spec' && tk.cols <= 2 && !invert && fPrice,
-    hasTag: !!p.tag, tagText: p.tag?.t ?? '', tagBg: p.tag ? (TAGCOL[p.tag.col] ?? '#211D17') : '#211D17',
+    hasTag: !!p.tag, tagText: p.tag?.t ?? '',
+    tagBg: p.tag ? (p.tag.col === 'custom' ? (p.tag.customCol ?? '#666666') : (TAGCOL[p.tag.col] ?? '#211D17')) : '#211D17',
     ringStyle: bs,
+    imageUrl: p.imageUrl,
     cellDraggable: !editing,
     dragOpacity: p.id === dragId ? '0.45' : '1',
     nameF, saveDim, saveLblF, savePctF, priceIntF, priceCentF,
