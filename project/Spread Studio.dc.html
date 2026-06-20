@@ -1,0 +1,1673 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Hanken+Grotesk:wght@400;500;600;700;800;900&amp;family=Anton&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  ::selection { background: oklch(0.57 0.2 25 / 0.22); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+  .sp-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+  .sp-scroll::-webkit-scrollbar-thumb { background: #D5CEC1; border-radius: 999px; border: 3px solid transparent; background-clip: padding-box; }
+  .sp-cell { transition: box-shadow .15s ease, transform .15s ease; }
+  .sp-cell:hover { box-shadow: 0 0 0 2px oklch(0.57 0.2 25 / .35) !important; }
+  .sp-up:hover { transform: translateY(-3px); box-shadow: 0 14px 32px rgba(33,29,23,.14) !important; }
+  .sp-in { width:100%; border:1px solid #E2DCD0; border-radius:9px; padding:9px 11px; font-family:'Hanken Grotesk',sans-serif; font-size:13.5px; color:#211D17; background:#fff; outline:none; }
+  .sp-in:focus { border-color:#211D17; }
+  .sp-nav span { cursor:pointer; transition:color .15s; } .sp-nav span:hover { color:#211D17; }
+  .sp-proj { transition: box-shadow .15s ease, transform .15s ease; }
+  .sp-proj:hover { transform: translateY(-3px); box-shadow:0 18px 44px rgba(33,29,23,.18) !important; }
+  .sp-tier:hover { transform: translateY(-3px); }
+</style>
+</helmet>
+
+<div style="position:relative; width:100vw; height:100vh; overflow:hidden; background:#F6F3ED; color:#211D17; font-family:'Hanken Grotesk',system-ui,sans-serif; -webkit-font-smoothing:antialiased;">
+
+  <!-- ============ HOME / UPLOAD ============ -->
+  <sc-if value="{{ isUpload }}" hint-placeholder-val="{{ true }}">
+    <div style="height:100%; display:flex; flex-direction:column;">
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:22px 34px;">
+        <div onClick="{{ goHome }}" style="display:flex; align-items:center; gap:11px; cursor:pointer;">
+          <div style="width:24px; height:24px; position:relative;">
+            <div style="position:absolute; inset:0 7px 7px 0; background:oklch(0.57 0.2 25); border-radius:5px;"></div>
+            <div style="position:absolute; inset:7px 0 0 7px; background:#211D17; border-radius:5px; mix-blend-mode:multiply;"></div>
+          </div>
+          <span style="font-family:'Instrument Serif',serif; font-size:25px; letter-spacing:0.3px;">Spread</span>
+        </div>
+        <sc-if value="{{ loggedIn }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ goProjects }}" style="border:1px solid #E0DACE; background:#fff; cursor:pointer; font-family:inherit; font-size:14px; font-weight:600; padding:9px 16px; border-radius:999px; color:#211D17;">← My projects</button>
+        </sc-if>
+        <sc-if value="{{ notLoggedIn }}" hint-placeholder-val="{{ true }}">
+          <div class="sp-nav" style="display:flex; gap:28px; align-items:center; font-size:14.5px; color:#6B645A;">
+            <span onClick="{{ goPricing }}">Templates</span><span onClick="{{ goPricing }}">Pricing</span><span onClick="{{ goSignin }}">Sign in</span>
+            <span onClick="{{ goSignup }}" style="background:#211D17; color:#F6F3ED; padding:10px 18px; border-radius:999px; font-weight:600;">Start free</span>
+          </div>
+        </sc-if>
+      </div>
+      <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:0 24px 40px;">
+        <div style="font-family:'Space Mono',monospace; font-size:12px; letter-spacing:3.5px; color:#8A8276; margin-bottom:24px;">CATALOG STUDIO FOR RETAIL</div>
+        <h1 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:70px; line-height:1.01; letter-spacing:-1.2px; max-width:880px; margin:0 0 22px; text-wrap:balance;">
+          Upload your price list.<br>Get a finished <span style="font-style:italic; color:oklch(0.57 0.2 25);">promo booklet</span> in seconds.
+        </h1>
+        <p style="font-size:18.5px; color:#6B645A; max-width:560px; margin:0 0 40px; line-height:1.5;">Drop a product sheet and Spread paginates a full multi-page flyer — then edit any element, swap layouts and export print-ready PDF or InDesign.</p>
+        <div onClick="{{ useSample }}" class="sp-up" style="cursor:pointer; width:min(620px,92vw); border:2px dashed #CFC8BA; border-radius:24px; background:#FBF9F4; padding:42px; display:flex; flex-direction:column; align-items:center; gap:15px; transition:all .25s ease;">
+          <div style="width:56px; height:56px; border-radius:16px; background:oklch(0.57 0.2 25); display:flex; align-items:center; justify-content:center; color:#fff; font-size:26px; animation:floaty 3s ease-in-out infinite;">↑</div>
+          <div style="font-size:19px; font-weight:600;">Drop a spreadsheet, CSV, or Shopify export</div>
+          <div style="font-size:14.5px; color:#6B645A;">columns for name, was &amp; now prices — <span style="color:oklch(0.57 0.2 25); font-weight:600; text-decoration:underline; text-underline-offset:2px;">browse files</span></div>
+        </div>
+        <button onClick="{{ useSample }}" style="margin-top:28px; background:none; border:none; cursor:pointer; font-family:'Hanken Grotesk',sans-serif; font-size:15px; color:#211D17; font-weight:600; border-bottom:2px solid oklch(0.57 0.2 25); padding:0 0 3px;">Try it with a sample hypermarket booklet →</button>
+        <div style="margin-top:48px; display:flex; gap:9px; flex-wrap:wrap; justify-content:center;">
+          <sc-for list="{{ sources }}" as="s" hint-placeholder-count="5">
+            <span style="font-family:'Space Mono',monospace; font-size:11.5px; color:#8A8276; border:1px solid #E0DACE; border-radius:999px; padding:6px 13px; background:#FBF9F4;">{{ s }}</span>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ PRICING ============ -->
+  <sc-if value="{{ isPricing }}" hint-placeholder-val="{{ false }}">
+    <div class="sp-scroll" style="height:100%; overflow:auto; display:flex; flex-direction:column;">
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:22px 34px; position:sticky; top:0; background:#F6F3ED; z-index:5;">
+        <div onClick="{{ goHome }}" style="display:flex; align-items:center; gap:11px; cursor:pointer;">
+          <div style="width:24px; height:24px; position:relative;">
+            <div style="position:absolute; inset:0 7px 7px 0; background:oklch(0.57 0.2 25); border-radius:5px;"></div>
+            <div style="position:absolute; inset:7px 0 0 7px; background:#211D17; border-radius:5px; mix-blend-mode:multiply;"></div>
+          </div>
+          <span style="font-family:'Instrument Serif',serif; font-size:25px;">Spread</span>
+        </div>
+        <div class="sp-nav" style="display:flex; gap:28px; align-items:center; font-size:14.5px; color:#6B645A;">
+          <span onClick="{{ goHome }}">Home</span><span onClick="{{ goSignin }}">Sign in</span>
+          <span onClick="{{ goSignup }}" style="background:#211D17; color:#F6F3ED; padding:10px 18px; border-radius:999px; font-weight:600;">Start free</span>
+        </div>
+      </div>
+      <div style="flex:1; width:100%; max-width:1080px; margin:0 auto; padding:18px 24px 70px;">
+        <div style="text-align:center; margin-bottom:44px;">
+          <div style="font-family:'Space Mono',monospace; font-size:12px; letter-spacing:3px; color:#8A8276; margin-bottom:16px;">PRICING</div>
+          <h1 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:54px; margin:0 0 14px; letter-spacing:-0.8px;">Plans that scale with your shelves</h1>
+          <p style="font-size:17px; color:#6B645A; margin:0;">Start free. Upgrade when your flyers go to print.</p>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:20px; align-items:start;">
+          <sc-for list="{{ pricingTiers }}" as="t" hint-placeholder-count="3">
+            <div class="sp-tier" style="background:{{ t.cardBg }}; color:{{ t.textCol }}; border-radius:18px; padding:28px; box-shadow:{{ t.shadow }}; transition:transform .15s ease; position:relative; overflow:hidden;">
+              <sc-if value="{{ t.highlight }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute; top:16px; right:16px; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:1px; background:oklch(0.86 0.16 92); color:#211D17; padding:4px 10px; border-radius:999px; font-weight:700;">POPULAR</div>
+              </sc-if>
+              <div style="font-weight:800; font-size:19px; margin-bottom:6px;">{{ t.name }}</div>
+              <div style="font-size:13.5px; color:{{ t.subCol }}; margin-bottom:20px;">{{ t.tagline }}</div>
+              <div style="display:flex; align-items:baseline; gap:4px; margin-bottom:22px;">
+                <span style="font-family:'Anton',sans-serif; font-size:46px; line-height:1;">{{ t.price }}</span>
+                <span style="font-size:14px; color:{{ t.subCol }};">{{ t.per }}</span>
+              </div>
+              <button onClick="{{ t.onSelect }}" style="width:100%; border:none; cursor:pointer; font-family:inherit; font-size:14px; font-weight:700; padding:12px; border-radius:11px; background:{{ t.ctaBg }}; color:{{ t.ctaFg }}; margin-bottom:22px;">{{ t.cta }}</button>
+              <div style="display:flex; flex-direction:column; gap:11px;">
+                <sc-for list="{{ t.features }}" as="f" hint-placeholder-count="5">
+                  <div style="display:flex; align-items:flex-start; gap:9px; font-size:13.5px; color:{{ t.featCol }};">
+                    <span style="color:{{ t.tickCol }}; flex:none;">✓</span><span>{{ f }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ AUTH (sign in / sign up) ============ -->
+  <sc-if value="{{ isAuth }}" hint-placeholder-val="{{ false }}">
+    <div style="height:100%; display:flex;">
+      <div style="flex:1; background:oklch(0.57 0.2 25); color:#fff; padding:48px; display:flex; flex-direction:column; justify-content:space-between; min-width:0;">
+        <div onClick="{{ goHome }}" style="display:flex; align-items:center; gap:11px; cursor:pointer;">
+          <div style="width:26px; height:26px; border-radius:7px; background:#fff; display:flex; align-items:center; justify-content:center; color:oklch(0.57 0.2 25); font-family:'Anton',sans-serif; font-size:16px;">S</div>
+          <span style="font-family:'Instrument Serif',serif; font-size:26px;">Spread</span>
+        </div>
+        <div>
+          <h2 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:46px; line-height:1.05; margin:0 0 18px; letter-spacing:-0.5px;">From spreadsheet to print-ready flyer.</h2>
+          <p style="font-size:16px; opacity:.9; max-width:380px; line-height:1.5; margin:0;">Join retail teams turning weekly price lists into beautiful multi-page booklets — no designer required.</p>
+        </div>
+        <div style="font-family:'Space Mono',monospace; font-size:12px; opacity:.8; letter-spacing:1px;">TRUSTED BY 4,200+ STORES</div>
+      </div>
+      <div style="flex:1; display:flex; align-items:center; justify-content:center; padding:40px; min-width:0;">
+        <div style="width:380px; max-width:100%;">
+          <h1 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:38px; margin:0 0 6px;">{{ authTitle }}</h1>
+          <p style="font-size:14.5px; color:#6B645A; margin:0 0 28px;">{{ authSubtitle }}</p>
+          <sc-if value="{{ authIsSignup }}" hint-placeholder-val="{{ false }}">
+            <label style="font-size:11.5px; font-weight:700; color:#6B645A; display:block; margin-bottom:6px;">Full name</label>
+            <input class="sp-in" placeholder="Alex Rivera" style="margin-bottom:14px;">
+          </sc-if>
+          <label style="font-size:11.5px; font-weight:700; color:#6B645A; display:block; margin-bottom:6px;">Work email</label>
+          <input class="sp-in" placeholder="you@store.com" style="margin-bottom:14px;">
+          <label style="font-size:11.5px; font-weight:700; color:#6B645A; display:block; margin-bottom:6px;">Password</label>
+          <input class="sp-in" type="password" placeholder="••••••••" style="margin-bottom:22px;">
+          <button onClick="{{ doAuth }}" style="width:100%; border:none; cursor:pointer; font-family:inherit; font-size:15px; font-weight:700; padding:13px; border-radius:11px; background:oklch(0.57 0.2 25); color:#fff; margin-bottom:18px;">{{ authCta }}</button>
+          <div style="text-align:center; font-size:13.5px; color:#6B645A;">{{ authSwitchText }} <span onClick="{{ toggleAuthMode }}" style="cursor:pointer; color:oklch(0.57 0.2 25); font-weight:700;">{{ authSwitchCta }}</span></div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ PROJECTS DASHBOARD ============ -->
+  <sc-if value="{{ isProjects }}" hint-placeholder-val="{{ false }}">
+    <div class="sp-scroll" style="height:100%; overflow:auto; display:flex; flex-direction:column;">
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:22px 40px; border-bottom:1px solid #EAE6DD;">
+        <div style="display:flex; align-items:center; gap:11px;">
+          <div style="width:24px; height:24px; position:relative;">
+            <div style="position:absolute; inset:0 7px 7px 0; background:oklch(0.57 0.2 25); border-radius:5px;"></div>
+            <div style="position:absolute; inset:7px 0 0 7px; background:#211D17; border-radius:5px; mix-blend-mode:multiply;"></div>
+          </div>
+          <span style="font-family:'Instrument Serif',serif; font-size:25px;">Spread</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:16px;">
+          <span onClick="{{ goPricing }}" style="cursor:pointer; font-size:14px; color:#6B645A;">Pricing</span>
+          <div style="width:34px; height:34px; border-radius:50%; background:oklch(0.57 0.2 25); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px;">A</div>
+        </div>
+      </div>
+      <div style="flex:1; width:100%; max-width:1080px; margin:0 auto; padding:40px 40px 70px;">
+        <div style="display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:28px;">
+          <div>
+            <h1 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:42px; margin:0 0 4px;">Your projects</h1>
+            <p style="font-size:14.5px; color:#6B645A; margin:0;">{{ projectCountLabel }}</p>
+          </div>
+          <button onClick="{{ newProject }}" style="border:none; cursor:pointer; font-family:inherit; font-size:14px; font-weight:700; padding:12px 20px; border-radius:11px; background:#211D17; color:#F6F3ED; display:flex; align-items:center; gap:8px;"><span style="font-size:17px; line-height:1;">+</span> New project</button>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:22px;">
+          <div onClick="{{ newProject }}" class="sp-proj" style="cursor:pointer; border:2px dashed #CFC8BA; border-radius:16px; background:#FBF9F4; min-height:230px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; color:#6B645A;">
+            <div style="width:48px; height:48px; border-radius:13px; background:oklch(0.57 0.2 25); color:#fff; display:flex; align-items:center; justify-content:center; font-size:26px;">+</div>
+            <div style="font-weight:700; font-size:15px;">New project</div>
+            <div style="font-size:12.5px; color:#9A9182;">Import a price list</div>
+          </div>
+          <sc-for list="{{ projectCards }}" as="pc" hint-placeholder-count="3">
+            <div onClick="{{ pc.onOpen }}" class="sp-proj" style="cursor:pointer; border-radius:16px; background:#fff; box-shadow:0 1px 3px rgba(33,29,23,.1); overflow:hidden; display:flex; flex-direction:column;">
+              <div style="height:140px; background:{{ pc.cover }}; color:#fff; padding:18px; display:flex; flex-direction:column; justify-content:space-between; position:relative;">
+                <div style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:1px; opacity:.9;">{{ pc.store }}</div>
+                <div style="font-family:'Anton',sans-serif; font-size:30px; line-height:0.88; transform:skewX(-7deg); transform-origin:left;">{{ pc.h1 }}<br>{{ pc.h2 }}</div>
+                <div style="position:absolute; top:14px; right:14px; width:20px; height:20px; border-radius:5px; background:{{ pc.badge }};"></div>
+              </div>
+              <div style="padding:16px 18px;">
+                <div style="font-weight:700; font-size:15px; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ pc.name }}</div>
+                <div style="display:flex; align-items:center; justify-content:space-between; font-family:'Space Mono',monospace; font-size:11px; color:#9A9182;">
+                  <span>{{ pc.deals }}</span><span>{{ pc.updated }}</span>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ PROCESSING ============ -->
+  <sc-if value="{{ isProcessing }}" hint-placeholder-val="{{ false }}">
+    <div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:30px; padding:24px;">
+      <div style="font-family:'Space Mono',monospace; font-size:12px; letter-spacing:3px; color:#8A8276;">{{ procText }}</div>
+      <h2 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:48px; margin:0; letter-spacing:-0.5px;">Building your booklet</h2>
+      <div style="display:grid; grid-template-columns:repeat(6, 66px); gap:11px;">
+        <sc-for list="{{ procThumbs }}" as="t" hint-placeholder-count="0">
+          <div style="height:82px; border-radius:9px; background:#fff; border:1px solid #ECE8DF; box-shadow:0 3px 10px rgba(33,29,23,.07); position:relative; overflow:hidden;">
+            <div style="position:absolute; inset:0; background:{{ t.bg }};"></div>
+            <div style="position:absolute; right:5px; bottom:5px; background:oklch(0.57 0.2 25); color:#fff; font-family:'Anton',sans-serif; font-size:9px; padding:2px 5px; border-radius:4px;">{{ t.tag }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="width:360px;">
+        <div style="height:6px; background:#E4DFD5; border-radius:999px; overflow:hidden;">
+          <div style="height:100%; width:{{ procPct }}; background:oklch(0.57 0.2 25); border-radius:999px; transition:width .55s cubic-bezier(.4,0,.2,1);"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-top:11px; font-size:13px; color:#6B645A; font-family:'Space Mono',monospace;">
+          <span>{{ procCount }} deals priced</span><span>{{ procPct }}</span>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ EDITOR ============ -->
+  <sc-if value="{{ isEditor }}" hint-placeholder-val="{{ false }}">
+    <div style="height:100%; display:flex; flex-direction:column;">
+
+      <!-- top bar -->
+      <div style="height:58px; flex:none; display:flex; align-items:center; justify-content:space-between; padding:0 18px; border-bottom:1px solid #EAE6DD; background:#FBF9F4;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <button onClick="{{ goProjects }}" title="All projects" style="border:1px solid #E0DACE; background:#fff; cursor:pointer; height:34px; padding:0 12px; border-radius:9px; font-family:inherit; font-size:13px; font-weight:600; color:#211D17; display:flex; align-items:center; gap:6px;">← Projects</button>
+          <div style="width:21px; height:21px; position:relative;">
+            <div style="position:absolute; inset:0 6px 6px 0; background:{{ accent }}; border-radius:4px;"></div>
+            <div style="position:absolute; inset:6px 0 0 6px; background:#211D17; border-radius:4px; mix-blend-mode:multiply;"></div>
+          </div>
+          <input value="{{ catalogName }}" onInput="{{ setCatalogName }}" style="border:none; outline:none; background:none; font-family:inherit; font-weight:700; font-size:14.5px; color:#211D17; width:230px;">
+        </div>
+        <div style="display:flex; align-items:center; gap:16px; font-family:'Space Mono',monospace; font-size:11.5px; color:#9A9182;">
+          <span>{{ totalPages }} PAGES</span><span>·</span><span>{{ pageSizeLabel }}</span><span>·</span><span>{{ orientationLabel }}</span><span>·</span><span>{{ gridLabel }} GRID</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="display:flex; gap:4px; margin-right:4px;">
+            <button onClick="{{ undo }}" title="Undo" style="border:1px solid #E0DACE; background:#fff; cursor:pointer; width:34px; height:34px; border-radius:9px; font-size:16px; color:#211D17; opacity:{{ undoOpacity }};">↺</button>
+            <button onClick="{{ redo }}" title="Redo" style="border:1px solid #E0DACE; background:#fff; cursor:pointer; width:34px; height:34px; border-radius:9px; font-size:16px; color:#211D17; opacity:{{ redoOpacity }};">↻</button>
+          </div>
+          <button onClick="{{ openExport }}" style="border:none; cursor:pointer; font-family:inherit; font-size:13.5px; font-weight:700; padding:9px 18px; border-radius:9px; background:{{ accent }}; color:#fff; box-shadow:0 2px 8px rgba(33,29,23,.12);">Export</button>
+        </div>
+      </div>
+
+      <!-- body -->
+      <div style="flex:1; display:flex; min-height:0;">
+
+        <!-- TOOL RAIL -->
+        <div style="width:52px; flex:none; background:#211D17; display:flex; flex-direction:column; align-items:center; padding:10px 0; gap:6px;">
+          <sc-for list="{{ tools }}" as="tl" hint-placeholder-count="7">
+            <button onClick="{{ tl.onSelect }}" title="{{ tl.n }}" style="width:36px; height:36px; border:none; border-radius:9px; cursor:pointer; background:{{ tl.bg }}; color:{{ tl.fg }}; font-size:16px; font-weight:700; font-family:'Hanken Grotesk',sans-serif; display:flex; align-items:center; justify-content:center;">{{ tl.g }}</button>
+          </sc-for>
+          <div style="flex:1;"></div>
+          <div style="width:28px; height:28px; border-radius:7px; background:{{ accent }};"></div>
+        </div>
+
+        <!-- LEFT: deals / pages -->
+        <div style="width:288px; flex:none; border-right:1px solid #EAE6DD; background:#FBF9F4; display:flex; flex-direction:column;">
+          <div style="display:flex; gap:4px; padding:12px 12px 0;">
+            <button onClick="{{ setDealsTab }}" style="flex:1; border:none; cursor:pointer; font-family:inherit; font-size:13px; font-weight:700; padding:9px; border-radius:9px 9px 0 0; background:{{ dealsTabBg }}; color:{{ dealsTabFg }};">Deals</button>
+            <button onClick="{{ setPagesTab }}" style="flex:1; border:none; cursor:pointer; font-family:inherit; font-size:13px; font-weight:700; padding:9px; border-radius:9px 9px 0 0; background:{{ pagesTabBg }}; color:{{ pagesTabFg }};">Pages</button>
+          </div>
+
+          <sc-if value="{{ isDealsTab }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:16px 16px 12px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+              <span style="font-weight:700; font-size:15px;">Deals</span>
+              <div style="display:flex; align-items:center; gap:7px;">
+                <span style="font-family:'Space Mono',monospace; font-size:11px; color:#9A9182; background:#F0ECE3; padding:3px 9px; border-radius:999px;">{{ productCount }}</span>
+                <button onClick="{{ addBlank }}" title="Add a blank element you design yourself" style="border:1px solid #E0DACE; background:#fff; cursor:pointer; height:26px; padding:0 9px; border-radius:8px; font-family:inherit; font-size:11px; font-weight:700; color:#211D17;">New Item</button>
+                <button onClick="{{ addDeal }}" title="Add deal" style="border:none; cursor:pointer; width:26px; height:26px; border-radius:8px; background:{{ accent }}; color:#fff; font-size:16px; line-height:1; display:flex; align-items:center; justify-content:center;">+</button>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; background:#fff; border:1px solid #E8E2D6; border-radius:10px; padding:8px 11px;">
+              <span style="color:#B7AE9E; font-size:14px;">⌕</span>
+              <input placeholder="Search deals" style="border:none; outline:none; background:none; font-family:inherit; font-size:13.5px; color:#211D17; width:100%;">
+            </div>
+            <div style="font-family:'Space Mono',monospace; font-size:10.5px; color:#B7AE9E; margin-top:11px; letter-spacing:0.5px;">CLICK &amp; HOLD TO REORDER · CLICK TO EDIT</div>
+          </div>
+          <div class="sp-scroll" style="flex:1; overflow:auto; padding:0 10px 12px;">
+            <sc-for list="{{ products }}" as="item" hint-placeholder-count="9">
+              <div draggable="true" onDragStart="{{ item.onDragStart }}" onDragEnter="{{ item.onDragEnter }}" onDragOver="{{ dragOver }}" onDragEnd="{{ endDrag }}" onClick="{{ item.onSelect }}" style="display:flex; align-items:center; gap:10px; padding:7px 9px; border-radius:11px; cursor:grab; background:#fff; box-shadow:{{ item.ringStyle }}; margin-bottom:6px; transition:box-shadow .15s ease; opacity:{{ item.dragOpacity }};">
+                <span style="font-family:'Space Mono',monospace; font-size:11px; color:#B7AE9E; width:18px; text-align:center;">{{ item.num }}</span>
+                <div style="width:40px; height:40px; border-radius:7px; background:{{ item.imgBg }}; flex:none; border:1px solid #ECE8DF;"></div>
+                <div style="flex:1; min-width:0;">
+                  <div style="font-weight:600; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ item.nameDisplay }}</div>
+                  <div style="font-family:'Space Mono',monospace; font-size:10px; color:#9A9182; text-transform:uppercase; letter-spacing:0.5px;">{{ item.category }}</div>
+                </div>
+                <div style="text-align:right; flex:none;">
+                  <div style="font-size:10px; color:#B7AE9E; text-decoration:line-through;">{{ item.wasText }}</div>
+                  <div style="font-weight:800; font-size:13px; color:{{ accent }};">{{ item.nowText }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          </sc-if>
+
+          <sc-if value="{{ isPagesTab }}" hint-placeholder-val="{{ false }}">
+            <div class="sp-scroll" style="flex:1; overflow:auto; padding:14px 16px;">
+              <button onClick="{{ addBlankPage }}" style="width:100%; border:1px dashed #CFC8BA; background:#fff; cursor:pointer; padding:11px; border-radius:11px; font-family:inherit; font-size:13px; font-weight:700; color:#211D17; margin-bottom:14px; display:flex; align-items:center; justify-content:center; gap:7px;"><span style="font-size:16px; line-height:1;">+</span> Add blank page</button>
+              <div style="font-family:'Space Mono',monospace; font-size:10.5px; color:#B7AE9E; margin-bottom:12px; letter-spacing:0.5px;">DRAG BLANK PAGES TO REORDER · {{ totalPages }} TOTAL</div>
+              <sc-for list="{{ pageNav }}" as="pg" hint-placeholder-count="4">
+                <div draggable="{{ pg.draggable }}" onDragStart="{{ pg.onDragStart }}" onDragEnter="{{ pg.onDragEnter }}" onDragOver="{{ pageDragOver }}" onDragEnd="{{ endPageDrag }}" onClick="{{ pg.onJump }}" style="display:flex; align-items:center; gap:12px; padding:8px; border-radius:11px; cursor:{{ pg.cursor }}; background:#fff; box-shadow:0 0 0 1px #ECE8DF; margin-bottom:9px; opacity:{{ pg.dragOpacity }};">
+                  <div style="width:42px; height:58px; flex:none; border-radius:4px; overflow:hidden; background:#fff; box-shadow:0 1px 4px rgba(33,29,23,.15); position:relative;">
+                    <sc-if value="{{ pg.isCover }}" hint-placeholder-val="{{ true }}">
+                      <div style="position:absolute; inset:0; background:{{ accent }};"></div>
+                    </sc-if>
+                    <sc-if value="{{ pg.isManual }}" hint-placeholder-val="{{ false }}">
+                      <div style="position:absolute; inset:6px; border:1px dashed #CFC8BA; border-radius:3px;"></div>
+                    </sc-if>
+                    <div style="position:absolute; top:0; left:0; right:0; height:11px; background:{{ accent }};"></div>
+                  </div>
+                  <div style="flex:1; min-width:0;">
+                    <div style="font-weight:700; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ pg.label }}</div>
+                    <div style="font-family:'Space Mono',monospace; font-size:10.5px; color:#9A9182; text-transform:uppercase; letter-spacing:0.5px;">Page {{ pg.no }}</div>
+                  </div>
+                  <sc-if value="{{ pg.isManual }}" hint-placeholder-val="{{ false }}">
+                    <button onClick="{{ pg.onDelete }}" title="Delete page" style="border:none; background:#F0ECE3; cursor:pointer; width:24px; height:24px; border-radius:7px; color:#9A9182; font-size:12px; flex:none;">✕</button>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+
+        <!-- CENTER: rulers + booklet canvas -->
+        <div style="flex:1; display:flex; flex-direction:column; min-height:0; min-width:0;">
+          <sc-if value="{{ showRulers }}" hint-placeholder-val="{{ true }}">
+            <div style="flex:none; height:22px; display:flex; background:#F2EFE8; border-bottom:1px solid #E0DACE;">
+              <div style="width:22px; flex:none; border-right:1px solid #E0DACE; display:flex; align-items:center; justify-content:center; font-family:'Space Mono',monospace; font-size:8px; color:#B7AE9E;">{{ unitsLabel }}</div>
+              <div style="flex:1; background-image:repeating-linear-gradient(90deg,#c2bba8 0 1px,transparent 1px 50px),repeating-linear-gradient(90deg,#e0dacd 0 1px,transparent 1px 10px);"></div>
+            </div>
+          </sc-if>
+          <div style="flex:1; display:flex; min-height:0; min-width:0;">
+            <sc-if value="{{ showRulers }}" hint-placeholder-val="{{ true }}">
+              <div style="width:22px; flex:none; background:#F2EFE8; border-right:1px solid #E0DACE; background-image:repeating-linear-gradient(0deg,#c2bba8 0 1px,transparent 1px 50px),repeating-linear-gradient(0deg,#e0dacd 0 1px,transparent 1px 10px);"></div>
+            </sc-if>
+            <div id="sp-canvas" onClick="{{ deselect }}" class="sp-scroll" style="flex:1; min-width:0; overflow:auto; background:#E9E5DC; padding:38px 32px 80px; cursor:{{ canvasCursor }};">
+
+          <sc-if value="{{ isInspNone }}" hint-placeholder-val="{{ true }}">
+            <div style="max-width:{{ pageW }}px; margin:0 auto 22px; display:flex; align-items:center; gap:8px; justify-content:center; font-size:12.5px; color:#8A8276; background:#F2EFE8; border:1px solid #E0DACE; border-radius:999px; padding:8px 16px; width:fit-content;">
+              <span style="color:{{ accent }};">✎</span> Click any deal to edit · double-click text to rename · drag to reorder
+            </div>
+          </sc-if>
+
+          <div style="width:{{ pageW }}px; margin:0 auto; zoom:{{ zoomCss }};">
+
+            <!-- FLYER COVER (editable) -->
+            <div id="sp-cover" onClick="{{ selectCover }}" style="width:{{ pageW }}px; height:{{ pageH }}px; background:#fff; border-radius:4px; box-shadow:{{ coverRing }}; overflow:hidden; margin-bottom:26px; cursor:pointer; display:flex; flex-direction:column;">
+              <div style="flex:1; background:{{ accent }}; color:#fff; padding:7% 8% 8%; position:relative; display:flex; flex-direction:column;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6%;">
+                  <div style="display:flex; align-items:center; gap:3%;">
+                    <div style="width:{{ coverMark }}px; height:{{ coverMark }}px; border-radius:24%; background:#fff; display:flex; align-items:center; justify-content:center; color:{{ accent }}; font-family:'Anton',sans-serif; font-size:{{ coverMarkF }}px;">G</div>
+                    <div style="line-height:1.05;">
+                      <div style="font-family:'Anton',sans-serif; font-size:{{ coverBrandF }}px; letter-spacing:0.5px;">{{ cov.brand }}</div>
+                      <div style="font-size:{{ coverSmallF }}px; opacity:.85; letter-spacing:1px; margin-top:3px;">WHERE VALUE LIVES</div>
+                    </div>
+                  </div>
+                  <div style="background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.4); border-radius:999px; padding:6px 13px; font-family:'Space Mono',monospace; font-size:{{ coverSmallF }}px; letter-spacing:0.5px;">{{ cov.validity }}</div>
+                </div>
+                <div style="margin-top:auto;">
+                  <div style="font-family:'Anton',sans-serif; font-size:{{ coverH1 }}px; line-height:0.9; transform:skewX(-7deg); transform-origin:left;">{{ cov.headline1 }}<br>{{ cov.headline2 }}</div>
+                  <div style="display:inline-block; margin-top:5%; background:{{ badge }}; color:#211D17; font-family:'Anton',sans-serif; font-size:{{ coverBurstF }}px; padding:1.5% 4%; border-radius:8px; transform:skewX(-7deg);">{{ cov.burst }}</div>
+                </div>
+              </div>
+              <div style="padding:3% 8%; display:flex; justify-content:space-between; font-family:'Space Mono',monospace; font-size:{{ coverSmallF }}px; color:#9A9182; letter-spacing:0.5px;">
+                <span>{{ productCount }} DEALS</span><span>{{ totalPages }} PAGES</span><span>MADE WITH SPREAD</span>
+              </div>
+            </div>
+
+            <!-- CONTENT PAGES -->
+            <sc-for list="{{ pages }}" as="page" hint-placeholder-count="3">
+              <div id="sp-pg-{{ page.idx0 }}" style="position:relative; width:{{ pageW }}px; height:{{ pageH }}px; background:#fff; border-radius:4px; box-shadow:0 10px 30px rgba(33,29,23,.12); overflow:hidden; margin-bottom:26px; display:flex; flex-direction:column;">
+                <sc-if value="{{ showGuides }}" hint-placeholder-val="{{ false }}">
+                  <div style="position:absolute; inset:16px 18px; pointer-events:none; z-index:4; outline:1px solid rgba(0,160,235,.55); display:flex; gap:11px;">
+                    <sc-for list="{{ colGuides }}" as="cg" hint-placeholder-count="3">
+                      <div style="flex:1; border-left:1px solid rgba(235,0,150,.18); border-right:1px solid rgba(235,0,150,.18);"></div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+                <div onClick="{{ selectBanner }}" style="flex:none; background:{{ accent }}; color:#fff; padding:9px 12px 9px 22px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; box-shadow:{{ bannerRing }};">
+                  <span style="font-family:'Anton',sans-serif; font-size:22px; transform:skewX(-7deg); display:inline-block;">{{ ban.title }}</span>
+                  <div style="display:flex; align-items:center; gap:11px;">
+                    <div style="display:flex; gap:2px; background:rgba(0,0,0,.14); border-radius:8px; padding:2px;" title="Grid for this page">
+                      <sc-for list="{{ page.gridSelect }}" as="gs" hint-placeholder-count="5">
+                        <button onClick="{{ gs.onSelect }}" style="border:none; cursor:pointer; font-family:'Space Mono',monospace; font-size:9.5px; font-weight:700; padding:3px 7px; border-radius:6px; background:{{ gs.bg }}; color:{{ gs.fg }};">{{ gs.label }}</button>
+                      </sc-for>
+                    </div>
+                    <span style="font-family:'Space Mono',monospace; font-size:9.5px; opacity:.9; letter-spacing:1px; white-space:nowrap;">PAGE {{ page.pageNo }}/{{ page.totalPages }}</span>
+                  </div>
+                </div>
+                <div style="flex:1; padding:16px 18px; display:grid; grid-template-columns:{{ page.gridCols }}; grid-auto-rows:{{ page.cellRowH }}px; align-content:flex-start; gap:{{ page.cellGap }}px; min-height:0; overflow:hidden;">
+                  <sc-for list="{{ page.items }}" as="item" hint-placeholder-count="9">
+                    <div onClick="{{ item.onSelect }}" onDoubleClick="{{ item.onNameDbl }}" draggable="{{ item.cellDraggable }}" onDragStart="{{ item.onDragStart }}" onDragEnter="{{ item.onDragEnter }}" onDragOver="{{ dragOver }}" onDragEnd="{{ endDrag }}" class="sp-cell" style="grid-column:{{ item.colSpan }}; border:{{ item.border }}; border-radius:{{ item.cellRadius }}px; overflow:hidden; background:{{ item.cellBg }}; color:{{ item.cellText }}; opacity:{{ item.cellOpacity }}; cursor:grab; box-shadow:{{ item.ringStyle }}; display:flex; flex-direction:{{ item.cellDir }}; min-height:0;">
+                      <sc-if value="{{ item.showTopStripe }}" hint-placeholder-val="{{ false }}">
+                        <div style="height:4px; background:{{ accent }}; flex:none;"></div>
+                      </sc-if>
+                      <sc-if value="{{ item.showImage }}" hint-placeholder-val="{{ true }}">
+                      <div style="flex:{{ item.imgFlex }}; background:{{ item.imgBg }}; position:relative; display:flex; align-items:center; justify-content:center; min-height:{{ item.imgMinH }};">
+                        <span style="font-family:'Space Mono',monospace; font-size:8px; color:#B7AE9E; letter-spacing:1px;">{{ item.imgLabel }}</span>
+                        <sc-if value="{{ item.showBadge }}" hint-placeholder-val="{{ true }}">
+                          <div style="position:absolute; top:6px; right:6px; width:{{ item.saveDim }}px; height:{{ item.saveDim }}px; border-radius:50%; background:{{ badge }}; display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1; box-shadow:0 2px 6px rgba(33,29,23,.2);">
+                            <span style="font-family:'Hanken Grotesk',sans-serif; font-weight:800; font-size:{{ item.saveLblF }}px; color:#211D17;">SAVE</span>
+                            <span style="font-family:'Anton',sans-serif; font-size:{{ item.savePctF }}px; color:#211D17;">{{ item.savePct }}%</span>
+                          </div>
+                        </sc-if>
+                        <sc-if value="{{ item.hasTag }}" hint-placeholder-val="{{ false }}">
+                          <div style="position:absolute; top:8px; left:8px; background:{{ item.tagBg }}; color:#fff; font-weight:700; font-size:9px; padding:3px 8px; border-radius:999px;">{{ item.tagText }}</div>
+                        </sc-if>
+                      </div>
+                      </sc-if>
+                      <div style="padding:{{ item.infoPad }}; flex:{{ item.infoFlex }}; align-self:stretch; display:flex; flex-direction:column; justify-content:center; text-align:{{ item.align }};">
+                        <sc-if value="{{ item.showTitle }}" hint-placeholder-val="{{ true }}">
+                          <sc-if value="{{ item.isEditingName }}" hint-placeholder-val="{{ false }}">
+                            <input value="{{ item.name }}" ref="{{ item.focusRef }}" onInput="{{ item.editName }}" onBlur="{{ stopEdit }}" onKeyDown="{{ item.editKey }}" onClick="{{ stop }}" style="font-family:inherit; font-weight:{{ item.nameWeight }}; font-size:{{ item.nameF }}px; line-height:1.15; margin-bottom:2px; border:none; outline:2px solid {{ accent }}; border-radius:4px; padding:1px 3px; width:100%; background:#fff; color:#211D17;">
+                          </sc-if>
+                          <sc-if value="{{ item.notEditingName }}" hint-placeholder-val="{{ true }}">
+                            <div style="font-weight:{{ item.nameWeight }}; text-transform:{{ item.nameTransform }}; font-size:{{ item.nameF }}px; line-height:1.15; margin-bottom:2px; color:{{ item.nameColor }};">{{ item.nameDisplay }}</div>
+                          </sc-if>
+                        </sc-if>
+                        <sc-if value="{{ item.showDesc }}" hint-placeholder-val="{{ false }}">
+                          <sc-if value="{{ item.isEditingDesc }}" hint-placeholder-val="{{ false }}">
+                            <input value="{{ item.desc }}" ref="{{ item.focusRef }}" onInput="{{ item.editDesc }}" onBlur="{{ stopEdit }}" onKeyDown="{{ item.editKey }}" onClick="{{ stop }}" style="font-family:inherit; font-size:11px; margin-bottom:6px; border:none; outline:2px solid {{ accent }}; border-radius:4px; padding:1px 3px; width:100%; background:#fff; color:#211D17;">
+                          </sc-if>
+                          <sc-if value="{{ item.notEditingDesc }}" hint-placeholder-val="{{ true }}">
+                            <div onDoubleClick="{{ item.onDescDbl }}" style="font-size:11px; color:{{ item.descColShown }}; margin-bottom:6px;">{{ item.descDisplay }}</div>
+                          </sc-if>
+                        </sc-if>
+                        <sc-if value="{{ item.showText }}" hint-placeholder-val="{{ false }}">
+                          <div style="font-size:10.5px; color:{{ item.descCol }}; margin-bottom:6px; line-height:1.4;">{{ item.textDisplay }}</div>
+                        </sc-if>
+                        <sc-if value="{{ item.showChips }}" hint-placeholder-val="{{ false }}">
+                          <div style="display:flex; gap:5px; margin:5px 0 7px; flex-wrap:wrap;">
+                            <span style="font-size:9.5px; font-weight:700; background:#F0ECE3; color:#211D17; border-radius:5px; padding:3px 6px;">Pay 4× {{ item.payIn4 }}</span>
+                            <span style="font-size:9.5px; font-weight:700; background:#F0ECE3; color:#211D17; border-radius:5px; padding:3px 6px;">0% EMI</span>
+                          </div>
+                        </sc-if>
+                        <sc-if value="{{ item.showPrice }}" hint-placeholder-val="{{ true }}">
+                        <div style="display:flex; align-items:flex-end; gap:7px; justify-content:{{ item.justify }}; margin-top:4px;">
+                          <sc-if value="{{ item.showDiscountRow }}" hint-placeholder-val="{{ false }}">
+                            <span style="font-size:11px; color:{{ item.strikeCol }}; text-decoration:line-through; padding-bottom:4px;">{{ item.wasText }}</span>
+                          </sc-if>
+                          <sc-if value="{{ item.pricePlaceholder }}" hint-placeholder-val="{{ false }}">
+                            <div style="border:1px dashed #CFC8BA; border-radius:7px; padding:3px 10px; font-family:'Space Mono',monospace; font-size:10px; color:#B7AE9E; letter-spacing:1px;">PRICE</div>
+                          </sc-if>
+                          <sc-if value="{{ item.usePill }}" hint-placeholder-val="{{ true }}">
+                            <div style="background:{{ item.pillBg }}; color:{{ item.pillText }}; border-radius:8px; padding:3px 9px 4px; display:flex; align-items:baseline; gap:1px;">
+                              <span style="font-size:10px; font-weight:700; align-self:flex-start; margin-top:2px;">$</span>
+                              <span style="font-family:'Anton',sans-serif; font-size:{{ item.priceIntF }}px; line-height:0.9;">{{ item.nowInt }}</span>
+                              <span style="font-family:'Anton',sans-serif; font-size:{{ item.priceCentF }}px;">{{ item.nowCents }}</span>
+                            </div>
+                          </sc-if>
+                          <sc-if value="{{ item.plainPrice }}" hint-placeholder-val="{{ false }}">
+                            <div style="color:{{ accent }}; display:flex; align-items:baseline; gap:1px;">
+                              <span style="font-size:11px; font-weight:700; align-self:flex-start; margin-top:2px;">$</span>
+                              <span style="font-family:'Anton',sans-serif; font-size:{{ item.priceIntF }}px; line-height:0.9;">{{ item.nowInt }}</span>
+                              <span style="font-family:'Anton',sans-serif; font-size:{{ item.priceCentF }}px;">{{ item.nowCents }}</span>
+                            </div>
+                          </sc-if>
+                        </div>
+                        </sc-if>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="flex:none; padding:7px 22px; display:flex; justify-content:space-between; font-family:'Space Mono',monospace; font-size:9.5px; color:#B7AE9E; letter-spacing:0.5px; border-top:1px solid #F0ECE3;">
+                  <span>{{ cov.brand }} · WHILE STOCKS LAST</span><span>{{ pageSizeLabel }} · PAGE {{ page.pageNoOverall }}</span>
+                </div>
+              </div>
+            </sc-for>
+
+            <!-- MANUAL PAGES (hold their own deals) -->
+            <sc-for list="{{ manualPagesView }}" as="mp" hint-placeholder-count="0">
+              <div id="{{ mp.domId }}" style="position:relative; width:{{ pageW }}px; height:{{ pageH }}px; background:#fff; border-radius:4px; box-shadow:0 10px 30px rgba(33,29,23,.12); overflow:hidden; margin-bottom:26px; display:flex; flex-direction:column;">
+                <div style="flex:none; background:{{ accent }}; color:#fff; padding:9px 12px 9px 22px; display:flex; align-items:center; justify-content:space-between;">
+                  <span style="font-family:'Anton',sans-serif; font-size:22px; transform:skewX(-7deg); display:inline-block;">{{ mp.title }}</span>
+                  <div style="display:flex; align-items:center; gap:11px;">
+                    <div style="display:flex; gap:2px; background:rgba(0,0,0,.14); border-radius:8px; padding:2px;" title="Grid for this page">
+                      <sc-for list="{{ mp.gridSelect }}" as="gs" hint-placeholder-count="5">
+                        <button onClick="{{ gs.onSelect }}" style="border:none; cursor:pointer; font-family:'Space Mono',monospace; font-size:9.5px; font-weight:700; padding:3px 7px; border-radius:6px; background:{{ gs.bg }}; color:{{ gs.fg }};">{{ gs.label }}</button>
+                      </sc-for>
+                    </div>
+                    <span style="font-family:'Space Mono',monospace; font-size:9.5px; opacity:.9; letter-spacing:1px; white-space:nowrap;">CUSTOM</span>
+                  </div>
+                </div>
+                <sc-if value="{{ mp.isEmpty }}" hint-placeholder-val="{{ true }}">
+                  <div onClick="{{ mp.addDeal }}" style="flex:1; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+                    <div style="border:2px dashed #D5CEC1; border-radius:14px; padding:34px 52px; text-align:center; color:#B7AE9E; font-family:'Space Mono',monospace; font-size:11px; letter-spacing:1px; line-height:2;">
+                      <div style="width:40px; height:40px; border-radius:11px; background:{{ accent }}; color:#fff; display:flex; align-items:center; justify-content:center; font-size:24px; margin:0 auto 12px;">+</div>
+                      CLICK TO ADD A DEAL<br><span style="font-size:10px;">empty element you design</span>
+                    </div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ mp.hasItems }}" hint-placeholder-val="{{ false }}">
+                  <div style="flex:1; padding:16px 18px; display:grid; grid-template-columns:{{ mp.gridCols }}; grid-auto-rows:{{ mp.cellRowH }}px; align-content:flex-start; gap:{{ mp.cellGap }}px; min-height:0; overflow:hidden;">
+                    <sc-for list="{{ mp.items }}" as="item" hint-placeholder-count="3">
+                      <div onClick="{{ item.onSelect }}" onDoubleClick="{{ item.onNameDbl }}" class="sp-cell" style="grid-column:{{ item.colSpan }}; border:{{ item.border }}; border-radius:{{ item.cellRadius }}px; overflow:hidden; background:{{ item.cellBg }}; color:{{ item.cellText }}; opacity:{{ item.cellOpacity }}; cursor:pointer; box-shadow:{{ item.ringStyle }}; display:flex; flex-direction:{{ item.cellDir }}; min-height:0;">
+                        <sc-if value="{{ item.showTopStripe }}" hint-placeholder-val="{{ false }}">
+                          <div style="height:4px; background:{{ accent }}; flex:none;"></div>
+                        </sc-if>
+                        <sc-if value="{{ item.showImage }}" hint-placeholder-val="{{ true }}">
+                        <div style="flex:{{ item.imgFlex }}; background:{{ item.imgBg }}; position:relative; display:flex; align-items:center; justify-content:center; min-height:{{ item.imgMinH }};">
+                          <span style="font-family:'Space Mono',monospace; font-size:8px; color:#B7AE9E; letter-spacing:1px;">{{ item.imgLabel }}</span>
+                          <sc-if value="{{ item.showBadge }}" hint-placeholder-val="{{ true }}">
+                            <div style="position:absolute; top:6px; right:6px; width:{{ item.saveDim }}px; height:{{ item.saveDim }}px; border-radius:50%; background:{{ badge }}; display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1; box-shadow:0 2px 6px rgba(33,29,23,.2);">
+                              <span style="font-family:'Hanken Grotesk',sans-serif; font-weight:800; font-size:{{ item.saveLblF }}px; color:#211D17;">SAVE</span>
+                              <span style="font-family:'Anton',sans-serif; font-size:{{ item.savePctF }}px; color:#211D17;">{{ item.savePct }}%</span>
+                            </div>
+                          </sc-if>
+                          <sc-if value="{{ item.hasTag }}" hint-placeholder-val="{{ false }}">
+                            <div style="position:absolute; top:8px; left:8px; background:{{ item.tagBg }}; color:#fff; font-weight:700; font-size:9px; padding:3px 8px; border-radius:999px;">{{ item.tagText }}</div>
+                          </sc-if>
+                        </div>
+                        </sc-if>
+                        <div style="padding:{{ item.infoPad }}; flex:{{ item.infoFlex }}; align-self:stretch; display:flex; flex-direction:column; justify-content:center; text-align:{{ item.align }};">
+                          <sc-if value="{{ item.showTitle }}" hint-placeholder-val="{{ true }}">
+                            <sc-if value="{{ item.isEditingName }}" hint-placeholder-val="{{ false }}">
+                              <input value="{{ item.name }}" ref="{{ item.focusRef }}" onInput="{{ item.editName }}" onBlur="{{ stopEdit }}" onKeyDown="{{ item.editKey }}" onClick="{{ stop }}" style="font-family:inherit; font-weight:{{ item.nameWeight }}; font-size:{{ item.nameF }}px; line-height:1.15; margin-bottom:2px; border:none; outline:2px solid {{ accent }}; border-radius:4px; padding:1px 3px; width:100%; background:#fff; color:#211D17;">
+                            </sc-if>
+                            <sc-if value="{{ item.notEditingName }}" hint-placeholder-val="{{ true }}">
+                              <div style="font-weight:{{ item.nameWeight }}; text-transform:{{ item.nameTransform }}; font-size:{{ item.nameF }}px; line-height:1.15; margin-bottom:2px; color:{{ item.nameColor }};">{{ item.nameDisplay }}</div>
+                            </sc-if>
+                          </sc-if>
+                          <sc-if value="{{ item.showDesc }}" hint-placeholder-val="{{ false }}">
+                            <sc-if value="{{ item.isEditingDesc }}" hint-placeholder-val="{{ false }}">
+                              <input value="{{ item.desc }}" ref="{{ item.focusRef }}" onInput="{{ item.editDesc }}" onBlur="{{ stopEdit }}" onKeyDown="{{ item.editKey }}" onClick="{{ stop }}" style="font-family:inherit; font-size:11px; margin-bottom:6px; border:none; outline:2px solid {{ accent }}; border-radius:4px; padding:1px 3px; width:100%; background:#fff; color:#211D17;">
+                            </sc-if>
+                            <sc-if value="{{ item.notEditingDesc }}" hint-placeholder-val="{{ true }}">
+                              <div onDoubleClick="{{ item.onDescDbl }}" style="font-size:11px; color:{{ item.descColShown }}; margin-bottom:6px;">{{ item.descDisplay }}</div>
+                            </sc-if>
+                          </sc-if>
+                          <sc-if value="{{ item.showText }}" hint-placeholder-val="{{ false }}">
+                            <div style="font-size:10.5px; color:{{ item.descCol }}; margin-bottom:6px; line-height:1.4;">{{ item.textDisplay }}</div>
+                          </sc-if>
+                          <sc-if value="{{ item.showPrice }}" hint-placeholder-val="{{ true }}">
+                          <div style="display:flex; align-items:flex-end; gap:7px; justify-content:{{ item.justify }}; margin-top:4px;">
+                            <sc-if value="{{ item.showDiscountRow }}" hint-placeholder-val="{{ false }}">
+                              <span style="font-size:11px; color:{{ item.strikeCol }}; text-decoration:line-through; padding-bottom:4px;">{{ item.wasText }}</span>
+                            </sc-if>
+                            <sc-if value="{{ item.pricePlaceholder }}" hint-placeholder-val="{{ false }}">
+                              <div style="border:1px dashed #CFC8BA; border-radius:7px; padding:3px 10px; font-family:'Space Mono',monospace; font-size:10px; color:#B7AE9E; letter-spacing:1px;">PRICE</div>
+                            </sc-if>
+                            <sc-if value="{{ item.usePill }}" hint-placeholder-val="{{ true }}">
+                              <div style="background:{{ item.pillBg }}; color:{{ item.pillText }}; border-radius:8px; padding:3px 9px 4px; display:flex; align-items:baseline; gap:1px;">
+                                <span style="font-size:10px; font-weight:700; align-self:flex-start; margin-top:2px;">$</span>
+                                <span style="font-family:'Anton',sans-serif; font-size:{{ item.priceIntF }}px; line-height:0.9;">{{ item.nowInt }}</span>
+                                <span style="font-family:'Anton',sans-serif; font-size:{{ item.priceCentF }}px;">{{ item.nowCents }}</span>
+                              </div>
+                            </sc-if>
+                            <sc-if value="{{ item.plainPrice }}" hint-placeholder-val="{{ false }}">
+                              <div style="color:{{ accent }}; display:flex; align-items:baseline; gap:1px;">
+                                <span style="font-size:11px; font-weight:700; align-self:flex-start; margin-top:2px;">$</span>
+                                <span style="font-family:'Anton',sans-serif; font-size:{{ item.priceIntF }}px; line-height:0.9;">{{ item.nowInt }}</span>
+                                <span style="font-family:'Anton',sans-serif; font-size:{{ item.priceCentF }}px;">{{ item.nowCents }}</span>
+                              </div>
+                            </sc-if>
+                          </div>
+                          </sc-if>
+                        </div>
+                      </div>
+                    </sc-for>
+                    <div onClick="{{ mp.addDeal }}" title="Add a deal to this page" style="grid-column:span 1; border:2px dashed #D5CEC1; border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; cursor:pointer; color:#B7AE9E; min-height:0;">
+                      <div style="width:32px; height:32px; border-radius:9px; background:{{ accent }}; color:#fff; display:flex; align-items:center; justify-content:center; font-size:19px;">+</div>
+                      <span style="font-family:'Space Mono',monospace; font-size:9px; letter-spacing:1px;">ADD DEAL</span>
+                    </div>
+                  </div>
+                </sc-if>
+                <div style="flex:none; padding:7px 22px; display:flex; justify-content:space-between; font-family:'Space Mono',monospace; font-size:9.5px; color:#B7AE9E; letter-spacing:0.5px; border-top:1px solid #F0ECE3;">
+                  <span>{{ cov.brand }} · CUSTOM PAGE</span><span>{{ pageSizeLabel }}</span>
+                </div>
+              </div>
+            </sc-for>
+
+          </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: design controls / inspector -->
+        <div class="sp-scroll" style="width:312px; flex:none; border-left:1px solid #EAE6DD; background:#FBF9F4; overflow:auto;">
+
+          <!-- ===== DESIGN (no selection) ===== -->
+          <sc-if value="{{ isInspNone }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:22px; display:flex; flex-direction:column; gap:26px;">
+
+              <div>
+                <div style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:1.5px; color:#9A9182; margin-bottom:14px;">TEMPLATE</div>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                  <sc-for list="{{ templates }}" as="t" hint-placeholder-count="5">
+                    <div onClick="{{ t.onSelect }}" style="display:flex; align-items:center; gap:12px; padding:11px; border-radius:12px; cursor:pointer; background:#fff; box-shadow:{{ t.ringStyle }};">
+                      <div style="width:34px; height:42px; border-radius:5px; flex:none; background:#F0ECE3; position:relative; overflow:hidden; border:1px solid #E8E2D6;">
+                        <div style="position:absolute; top:0; left:0; right:0; height:8px; background:{{ accent }};"></div>
+                      </div>
+                      <div style="flex:1;">
+                        <div style="font-weight:700; font-size:13.5px;">{{ t.name }}</div>
+                        <div style="font-size:11.5px; color:#9A9182;">{{ t.desc }}</div>
+                      </div>
+                      <span style="font-size:15px; color:{{ t.check }};">✓</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+
+              <div>
+                <div style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:1.5px; color:#9A9182; margin-bottom:5px;">DEFAULT GRID</div>
+                <div style="font-size:11px; color:#B7AE9E; margin-bottom:11px; line-height:1.4;">New pages use this. Change any single page from the bar at the top of that page.</div>
+                <div style="display:flex; gap:9px;">
+                  <sc-for list="{{ grids }}" as="g" hint-placeholder-count="5">
+                    <div onClick="{{ g.onSelect }}" title="{{ g.label }}" style="flex:1; cursor:pointer; background:#fff; border-radius:9px; padding:8px 6px 6px; box-shadow:{{ g.ring }}; display:flex; flex-direction:column; align-items:center; gap:5px;">
+                      <div style="display:grid; grid-template-columns:{{ g.miniCols }}; gap:2px; width:22px;">
+                        <sc-for list="{{ g.cells }}" as="c" hint-placeholder-count="9">
+                          <div style="aspect-ratio:1; background:{{ g.dot }}; border-radius:1px;"></div>
+                        </sc-for>
+                      </div>
+                      <span style="font-size:9.5px; font-weight:700; color:{{ g.txt }};">{{ g.label }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+
+              <div>
+                <div style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:1.5px; color:#9A9182; margin-bottom:12px;">PAGE SIZE</div>
+                <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+                  <sc-for list="{{ sizes }}" as="z" hint-placeholder-count="5">
+                    <div onClick="{{ z.onSelect }}" style="cursor:pointer; font-size:12.5px; font-weight:600; padding:8px 14px; border-radius:9px; background:#fff; box-shadow:{{ z.ring }};">{{ z.label }}</div>
+                  </sc-for>
+                </div>
+                <div style="display:flex; background:#F0ECE3; border-radius:9px; padding:3px;">
+                  <button onClick="{{ setPortrait }}" style="flex:1; border:none; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:600; padding:7px; border-radius:7px; background:{{ portBg }}; color:{{ portFg }};">Portrait</button>
+                  <button onClick="{{ setLandscape }}" style="flex:1; border:none; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:600; padding:7px; border-radius:7px; background:{{ landBg }}; color:{{ landFg }};">Landscape</button>
+                </div>
+              </div>
+
+              <div>
+                <div style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:1.5px; color:#9A9182; margin-bottom:6px;">COLOR PALETTE</div>
+                <div style="display:flex; flex-direction:column; gap:8px; margin:12px 0 16px;">
+                  <sc-for list="{{ palettes }}" as="pl" hint-placeholder-count="6">
+                    <div onClick="{{ pl.onSelect }}" style="display:flex; align-items:center; gap:11px; padding:9px 11px; border-radius:11px; cursor:pointer; background:#fff; box-shadow:{{ pl.ring }};">
+                      <div style="display:flex; gap:5px; flex:none;">
+                        <div style="width:22px; height:22px; border-radius:6px; background:{{ pl.accent }};"></div>
+                        <div style="width:22px; height:22px; border-radius:6px; background:{{ pl.badge }};"></div>
+                      </div>
+                      <div style="flex:1; font-weight:700; font-size:13px;">{{ pl.name }}</div>
+                      <span style="font-size:14px; color:{{ pl.check }};">✓</span>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:1px; color:#B7AE9E; margin-bottom:10px;">ACCENT SWATCHES</div>
+                <div style="display:grid; grid-template-columns:repeat(6,1fr); gap:10px;">
+                  <sc-for list="{{ accents }}" as="a" hint-placeholder-count="6">
+                    <div onClick="{{ a.onSelect }}" title="{{ a.name }}" style="aspect-ratio:1; border-radius:50%; cursor:pointer; background:{{ a.color }}; box-shadow:{{ a.ring }};"></div>
+                  </sc-for>
+                </div>
+                <div style="margin-top:14px; display:flex; align-items:center; gap:11px; background:#fff; border-radius:11px; padding:10px 12px; box-shadow:{{ customRing }};">
+                  <label style="position:relative; width:34px; height:34px; flex:none; border-radius:9px; overflow:hidden; cursor:pointer; box-shadow:inset 0 0 0 1px rgba(0,0,0,.1);">
+                    <span style="position:absolute; inset:0; background:{{ customAccent }};"></span>
+                    <input type="color" value="{{ customAccent }}" onInput="{{ setCustomAccent }}" style="position:absolute; top:-6px; left:-6px; width:48px; height:48px; border:none; padding:0; background:none; cursor:pointer;">
+                  </label>
+                  <div onClick="{{ selectCustom }}" style="flex:1; cursor:pointer;">
+                    <div style="font-weight:700; font-size:13px;">Custom accent</div>
+                    <div style="font-family:'Space Mono',monospace; font-size:11px; color:#9A9182;">{{ customAccent }}</div>
+                  </div>
+                </div>
+                <div style="margin-top:12px; font-family:'Space Mono',monospace; font-size:11px; color:#6B645A;">{{ accentName }}</div>
+              </div>
+
+              <div style="background:{{ accentSoft }}; border-radius:12px; padding:16px;">
+                <div style="font-weight:700; font-size:13.5px; margin-bottom:5px;">Smart layout is on</div>
+                <div style="font-size:12.5px; color:#6B645A; line-height:1.45;">Spread auto-paginates your deals across {{ totalPages }} pages and recalculates savings live.</div>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- ===== PRODUCT INSPECTOR ===== -->
+          <sc-if value="{{ isInspProduct }}" hint-placeholder-val="{{ false }}">
+            <div style="position:sticky; top:0; background:#FBF9F4; z-index:2; padding:18px 22px 14px; border-bottom:1px solid #EAE6DD; display:flex; align-items:center; gap:10px;">
+              <button onClick="{{ deselect }}" style="border:none; background:#F0ECE3; cursor:pointer; width:30px; height:30px; border-radius:8px; font-size:15px; color:#211D17;">←</button>
+              <div style="line-height:1.1;">
+                <div style="font-weight:800; font-size:15px;">{{ sel.headerTitle }}</div>
+                <div style="font-size:11.5px; color:#9A9182; font-family:'Space Mono',monospace;">{{ sel.category }} · SAVE {{ sel.savePct }}%</div>
+              </div>
+            </div>
+            <div style="padding:20px 22px; display:flex; flex-direction:column; gap:24px;">
+
+              <div>
+                <div style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:1.5px; color:#9A9182; margin-bottom:12px;">CONTENT</div>
+                <label style="font-size:11.5px; font-weight:700; color:#6B645A; display:block; margin-bottom:6px;">Product name</label>
+                <input class="sp-in" value="{{ sel.name }}" onInput="{{ sel.setName }}">
+                <label style="font-size:11.5px; font-weight:700; color:#6B645A; display:block; margin:12px 0 6px;">Description</label>
+                <input class="sp-in" value="{{ sel.desc }}" onInput="{{ sel.setDesc }}">
+                <label style="font-size:11.5px; font-weight:700; color:#6B645A; display:block; margin:12px 0 6px;">Body text</label>
+                <input class="sp-in" value="{{ sel.text }}" onInput="{{ sel.setText }}">
+                <div style="display:flex; gap:10px; margin-top:12px;">
+                  <div style="flex:1;">
+                    <label style="font-size:11.5px; font-weight:700; color:#6B645A; display:block; margin-bottom:6px;">Was price</label>
+                    <input class="sp-in" type="number" value="{{ sel.was }}" onInput="{{ sel.setWas }}">
+                  </div>
+                  <div style="flex:1;">
+                    <label style="font-size:11.5px; font-weight:700; color:{{ accent }}; display:block; margin-bottom:6px;">Now price</label>
+                    <input class="sp-in" type="number" value="{{ sel.now }}" onInput="{{ sel.setNow }}">
+                  </div>
+                </div>
+                <div style="margin-top:10px; font-size:11.5px; color:#9A9182;">Save badge auto-calculates to <b style="color:#211D17;">{{ sel.savePct }}% off</b>.</div>
+              </div>
+
+              <div>
+                <div style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:1.5px; color:#9A9182; margin-bottom:6px;">FIELDS</div>
+                <div style="font-size:11.5px; color:#9A9182; margin-bottom:12px; line-height:1.45;">Show or hide each placeholder mapped from your CSV columns.</div>
+                <sc-for list="{{ sel.fieldRows }}" as="fr" hint-placeholder-count="7">
+                  <div onClick="{{ fr.onToggle }}" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; padding:9px 0; border-bottom:1px solid #EFEADF;">
+                    <span style="font-size:13.5px; font-weight:600;">{{ fr.label }}</span>
+                    <div style="width:38px; height:22px; border-radius:999px; background:{{ fr.swBg }}; position:relative;"><div style="position:absolute; top:2px; left:{{ fr.swX }}; width:18px; height:18px; border-radius:50%; background:#fff; transition:left .15s;"></div></div>
+                  </div>
+                </sc-for>
+              </div>
+
+              <div>
+                <div style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:1.5px; color:#9A9182; margin-bottom:12px;">LAYOUT</div>
+                <label style="font-size:11.5px; font-weight:700; color:#6B645A; display:block; margin-bottom:6px;">Text alignment</label>
+                <div style="display:flex; background:#F0ECE3; border-radius:9px; padding:3px; margin-bottom:14px;">
+                  <sc-for list="{{ sel.aligns }}" as="al" hint-placeholder-count="3">
+                    <button onClick="{{ al.onSelect }}" style="flex:1; border:none; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:600; padding:7px; border-radius:7px; background:{{ al.bg }}; color:{{ al.fg }};">{{ al.label }}</button>
+                  </sc-for>
+                </div>
+                <label style="font-size:11.5px; font-weight:700; color:#6B645A; display:block; margin-bottom:6px;">Image position</label>
+                <div style="display:flex; background:#F0ECE3; border-radius:9px; padding:3px; margin-bottom:14px;">
+                  <button onClick="{{ sel.setImgTop }}" style="flex:1; border:none; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:600; padding:7px; border-radius:7px; background:{{ sel.imgTopBg }}; color:{{ sel.imgTopFg }};">Image top</button>
+                  <button onClick="{{ sel.setImgLeft }}" style="flex:1; border:none; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:600; padding:7px; border-radius:7px; background:{{ sel.imgLeftBg }}; color:{{ sel.imgLeftFg }};">Image left</button>
+                </div>
+                <label style="font-size:11.5px; font-weight:700; color:#6B645A; display:block; margin-bottom:6px;">Inner padding</label>
+                <div style="display:flex; background:#F0ECE3; border-radius:9px; padding:3px; margin-bottom:14px;">
+                  <sc-for list="{{ sel.pads }}" as="pd" hint-placeholder-count="4">
+                    <button onClick="{{ pd.onSelect }}" style="flex:1; border:none; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:600; padding:7px; border-radius:7px; background:{{ pd.bg }}; color:{{ pd.fg }};">{{ pd.label }}</button>
+                  </sc-for>
+                </div>
+                <div onClick="{{ sel.toggleSpan }}" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; padding:10px 0;">
+                  <span style="font-size:13.5px; font-weight:600;">Span 2 columns</span>
+                  <div style="width:38px; height:22px; border-radius:999px; background:{{ sel.spanSwBg }}; position:relative;"><div style="position:absolute; top:2px; left:{{ sel.spanSwX }}; width:18px; height:18px; border-radius:50%; background:#fff; transition:left .15s;"></div></div>
+                </div>
+              </div>
+
+              <div>
+                <div style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:1.5px; color:#9A9182; margin-bottom:12px;">TYPE</div>
+                <label style="font-size:11.5px; font-weight:700; color:#6B645A; display:block; margin-bottom:6px;">Name weight</label>
+                <div style="display:flex; background:#F0ECE3; border-radius:9px; padding:3px; margin-bottom:14px;">
+                  <button onClick="{{ sel.setWReg }}" style="flex:1; border:none; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:600; padding:7px; border-radius:7px; background:{{ sel.wRegBg }}; color:{{ sel.wRegFg }};">Regular</button>
+                  <button onClick="{{ sel.setWMed }}" style="flex:1; border:none; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:600; padding:7px; border-radius:7px; background:{{ sel.wMedBg }}; color:{{ sel.wMedFg }};">Medium</button>
+                  <button onClick="{{ sel.setWBold }}" style="flex:1; border:none; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:600; padding:7px; border-radius:7px; background:{{ sel.wBoldBg }}; color:{{ sel.wBoldFg }};">Bold</button>
+                </div>
+                <div onClick="{{ sel.toggleUpper }}" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; padding:10px 0;">
+                  <span style="font-size:13.5px; font-weight:600;">Uppercase name</span>
+                  <div style="width:38px; height:22px; border-radius:999px; background:{{ sel.upperSwBg }}; position:relative;"><div style="position:absolute; top:2px; left:{{ sel.upperSwX }}; width:18px; height:18px; border-radius:50%; background:#fff; transition:left .15s;"></div></div>
+                </div>
+              </div>
+
+              <div>
+                <div style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:1.5px; color:#9A9182; margin-bottom:12px;">APPEARANCE</div>
+                <label style="font-size:11.5px; font-weight:700; color:#6B645A; display:block; margin-bottom:8px;">Cell background</label>
+                <div style="display:flex; gap:8px; margin-bottom:16px;">
+                  <sc-for list="{{ sel.bgs }}" as="bg" hint-placeholder-count="5">
+                    <div onClick="{{ bg.onSelect }}" title="{{ bg.label }}" style="flex:1; aspect-ratio:1; border-radius:8px; cursor:pointer; background:{{ bg.sw }}; border:1px solid #ECE8DF; box-shadow:{{ bg.ring }};"></div>
+                  </sc-for>
+                </div>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+                  <label style="font-size:11.5px; font-weight:700; color:#6B645A;">Corner radius</label>
+                  <span style="font-family:'Space Mono',monospace; font-size:11px; color:#9A9182;">{{ sel.radius }}px</span>
+                </div>
+                <input type="range" min="0" max="26" value="{{ sel.radius }}" onInput="{{ sel.setRadius }}" style="width:100%; accent-color:{{ accent }}; margin-bottom:14px;">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+                  <label style="font-size:11.5px; font-weight:700; color:#6B645A;">Opacity</label>
+                  <span style="font-family:'Space Mono',monospace; font-size:11px; color:#9A9182;">{{ sel.opacityPct }}%</span>
+                </div>
+                <input type="range" min="20" max="100" value="{{ sel.opacityPct }}" onInput="{{ sel.setOpacity }}" style="width:100%; accent-color:{{ accent }}; margin-bottom:8px;">
+                <div onClick="{{ sel.toggleShadow }}" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; padding:10px 0;">
+                  <span style="font-size:13.5px; font-weight:600;">Drop shadow</span>
+                  <div style="width:38px; height:22px; border-radius:999px; background:{{ sel.shadowSwBg }}; position:relative;"><div style="position:absolute; top:2px; left:{{ sel.shadowSwX }}; width:18px; height:18px; border-radius:50%; background:#fff; transition:left .15s;"></div></div>
+                </div>
+              </div>
+
+              <div>
+                <div style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:1.5px; color:#9A9182; margin-bottom:12px;">BORDER</div>
+                <div onClick="{{ sel.toggleBorder }}" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; padding:4px 0 12px;">
+                  <span style="font-size:13.5px; font-weight:600;">Custom border</span>
+                  <div style="width:38px; height:22px; border-radius:999px; background:{{ sel.borderSwBg }}; position:relative;"><div style="position:absolute; top:2px; left:{{ sel.borderSwX }}; width:18px; height:18px; border-radius:50%; background:#fff; transition:left .15s;"></div></div>
+                </div>
+                <sc-if value="{{ sel.borderOn }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+                    <label style="font-size:11.5px; font-weight:700; color:#6B645A;">Width</label>
+                    <span style="font-family:'Space Mono',monospace; font-size:11px; color:#9A9182;">{{ sel.borderW }}px</span>
+                  </div>
+                  <input type="range" min="1" max="6" value="{{ sel.borderW }}" onInput="{{ sel.setBorderW }}" style="width:100%; accent-color:{{ accent }}; margin-bottom:12px;">
+                  <div style="display:flex; gap:9px;">
+                    <sc-for list="{{ sel.borderColors }}" as="bc" hint-placeholder-count="3">
+                      <div onClick="{{ bc.onSelect }}" style="width:30px; height:30px; border-radius:50%; cursor:pointer; background:{{ bc.color }}; box-shadow:{{ bc.ring }};"></div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </div>
+
+              <div>
+                <div style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:1.5px; color:#9A9182; margin-bottom:12px;">FLAG / RIBBON</div>
+                <input class="sp-in" placeholder="e.g. NEW, FREE gift, 800 pts" value="{{ sel.tagText }}" onInput="{{ sel.setTag }}">
+                <div style="display:flex; gap:9px; margin-top:12px;">
+                  <sc-for list="{{ sel.tagColors }}" as="tc" hint-placeholder-count="3">
+                    <div onClick="{{ tc.onSelect }}" style="width:30px; height:30px; border-radius:50%; cursor:pointer; background:{{ tc.color }}; box-shadow:{{ tc.ring }};"></div>
+                  </sc-for>
+                </div>
+              </div>
+
+              <div>
+                <div style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:1.5px; color:#9A9182; margin-bottom:10px;">ARRANGE · {{ sel.posLabel }}</div>
+                <div style="display:flex; gap:8px;">
+                  <button onClick="{{ sel.moveUp }}" style="flex:1; border:1px solid #E0DACE; background:#fff; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:600; padding:9px; border-radius:9px;">↑ Move earlier</button>
+                  <button onClick="{{ sel.moveDown }}" style="flex:1; border:1px solid #E0DACE; background:#fff; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:600; padding:9px; border-radius:9px;">↓ Move later</button>
+                </div>
+              </div>
+
+              <button onClick="{{ sel.resetStyle }}" style="border:none; background:#F0ECE3; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:600; padding:10px; border-radius:9px; color:#6B645A;">↺ Reset element styling</button>
+
+              <div style="display:flex; gap:10px;">
+                <button onClick="{{ sel.duplicate }}" style="flex:1; border:1px solid #E0DACE; background:#fff; cursor:pointer; font-family:inherit; font-size:13px; font-weight:600; padding:11px; border-radius:10px;">Duplicate</button>
+                <button onClick="{{ sel.remove }}" style="flex:1; border:1px solid oklch(0.8 0.09 25); background:#fff; cursor:pointer; font-family:inherit; font-size:13px; font-weight:600; padding:11px; border-radius:10px; color:oklch(0.55 0.2 25);">Delete</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- ===== COVER INSPECTOR ===== -->
+          <sc-if value="{{ isInspCover }}" hint-placeholder-val="{{ false }}">
+            <div style="position:sticky; top:0; background:#FBF9F4; z-index:2; padding:18px 22px 14px; border-bottom:1px solid #EAE6DD; display:flex; align-items:center; gap:10px;">
+              <button onClick="{{ deselect }}" style="border:none; background:#F0ECE3; cursor:pointer; width:30px; height:30px; border-radius:8px; font-size:15px; color:#211D17;">←</button>
+              <div style="font-weight:800; font-size:15px;">Edit cover</div>
+            </div>
+            <div style="padding:20px 22px; display:flex; flex-direction:column; gap:14px;">
+              <div><label style="font-size:11.5px; font-weight:700; color:#6B645A; display:block; margin-bottom:6px;">Store name</label><input class="sp-in" value="{{ cov.brand }}" onInput="{{ cov.setBrand }}"></div>
+              <div><label style="font-size:11.5px; font-weight:700; color:#6B645A; display:block; margin-bottom:6px;">Headline line 1</label><input class="sp-in" value="{{ cov.headline1 }}" onInput="{{ cov.setH1 }}"></div>
+              <div><label style="font-size:11.5px; font-weight:700; color:#6B645A; display:block; margin-bottom:6px;">Headline line 2</label><input class="sp-in" value="{{ cov.headline2 }}" onInput="{{ cov.setH2 }}"></div>
+              <div><label style="font-size:11.5px; font-weight:700; color:#6B645A; display:block; margin-bottom:6px;">Savings burst</label><input class="sp-in" value="{{ cov.burst }}" onInput="{{ cov.setBurst }}"></div>
+              <div><label style="font-size:11.5px; font-weight:700; color:#6B645A; display:block; margin-bottom:6px;">Validity dates</label><input class="sp-in" value="{{ cov.validity }}" onInput="{{ cov.setValidity }}"></div>
+            </div>
+          </sc-if>
+
+          <!-- ===== BANNER INSPECTOR ===== -->
+          <sc-if value="{{ isInspBanner }}" hint-placeholder-val="{{ false }}">
+            <div style="position:sticky; top:0; background:#FBF9F4; z-index:2; padding:18px 22px 14px; border-bottom:1px solid #EAE6DD; display:flex; align-items:center; gap:10px;">
+              <button onClick="{{ deselect }}" style="border:none; background:#F0ECE3; cursor:pointer; width:30px; height:30px; border-radius:8px; font-size:15px; color:#211D17;">←</button>
+              <div style="font-weight:800; font-size:15px;">Edit section banner</div>
+            </div>
+            <div style="padding:20px 22px; display:flex; flex-direction:column; gap:14px;">
+              <div><label style="font-size:11.5px; font-weight:700; color:#6B645A; display:block; margin-bottom:6px;">Banner title</label><input class="sp-in" value="{{ ban.title }}" onInput="{{ ban.setTitle }}"></div>
+              <div><label style="font-size:11.5px; font-weight:700; color:#6B645A; display:block; margin-bottom:6px;">Subtitle</label><input class="sp-in" value="{{ ban.sub }}" onInput="{{ ban.setSub }}"></div>
+              <div style="font-size:12px; color:#9A9182; line-height:1.45;">This banner repeats on every page of the <b style="color:#211D17;">{{ templateName }}</b> template.</div>
+            </div>
+          </sc-if>
+
+        </div>
+      </div>
+
+      <!-- STATUS BAR -->
+      <div style="height:34px; flex:none; display:flex; align-items:center; justify-content:space-between; padding:0 14px; border-top:1px solid #EAE6DD; background:#FBF9F4; font-family:'Space Mono',monospace; font-size:11px; color:#6B645A;">
+        <div style="display:flex; align-items:center; gap:14px;">
+          <span style="color:#211D17; font-weight:700;">{{ selLabel }}</span>
+          <span style="color:#C8C0B1;">|</span>
+          <span>{{ totalPages }} pages · {{ pageSizeLabel }} · {{ orientationLabel }}</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button onClick="{{ toggleRulers }}" title="Rulers" style="border:none; cursor:pointer; font-family:inherit; font-size:10.5px; font-weight:700; padding:5px 9px; border-radius:7px; background:{{ rulersBtnBg }}; color:{{ rulersBtnFg }};">RULERS</button>
+          <button onClick="{{ toggleGuides }}" title="Margin &amp; column guides" style="border:none; cursor:pointer; font-family:inherit; font-size:10.5px; font-weight:700; padding:5px 9px; border-radius:7px; background:{{ guidesBtnBg }}; color:{{ guidesBtnFg }};">GUIDES</button>
+          <span style="color:#C8C0B1;">|</span>
+          <div style="display:flex; align-items:center; gap:2px;">
+            <button onClick="{{ zoomOut }}" style="border:1px solid #E0DACE; background:#fff; cursor:pointer; width:26px; height:24px; border-radius:7px 0 0 7px; font-size:14px; color:#211D17;">−</button>
+            <span style="min-width:46px; text-align:center; border-top:1px solid #E0DACE; border-bottom:1px solid #E0DACE; background:#fff; height:24px; line-height:24px; color:#211D17; font-weight:700;">{{ zoomPct }}</span>
+            <button onClick="{{ zoomIn }}" style="border:1px solid #E0DACE; background:#fff; cursor:pointer; width:26px; height:24px; border-radius:0 7px 7px 0; font-size:14px; color:#211D17;">+</button>
+          </div>
+          <button onClick="{{ zoomFit }}" style="border:1px solid #E0DACE; background:#fff; cursor:pointer; font-family:inherit; font-size:10.5px; font-weight:700; padding:5px 9px; border-radius:7px; color:#211D17;">FIT</button>
+          <button onClick="{{ zoomActual }}" style="border:1px solid #E0DACE; background:#fff; cursor:pointer; font-family:inherit; font-size:10.5px; font-weight:700; padding:5px 9px; border-radius:7px; color:#211D17;">100%</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ EXPORT MODAL ============ -->
+  <sc-if value="{{ exportOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeExport }}" style="position:absolute; inset:0; background:rgba(33,29,23,.5); backdrop-filter:blur(3px); display:flex; align-items:center; justify-content:center; z-index:50;">
+      <div onClick="{{ stop }}" style="width:580px; max-width:92vw; background:#FBF9F4; border-radius:20px; padding:32px; box-shadow:0 40px 100px rgba(0,0,0,.35);">
+        <sc-if value="{{ exportConfig }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:6px;">
+            <h3 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:32px; margin:0;">Export booklet</h3>
+            <span style="font-family:'Space Mono',monospace; font-size:12px; color:#9A9182;">{{ productCount }} deals · {{ totalPages }} pages · {{ pageSizeLabel }}</span>
+          </div>
+          <p style="font-size:14px; color:#6B645A; margin:0 0 22px;">Choose your output format.</p>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px;">
+            <div onClick="{{ setPdf }}" style="cursor:pointer; border-radius:14px; padding:20px; background:#fff; box-shadow:{{ pdfRing }};">
+              <div style="font-size:24px; margin-bottom:12px;">🖨</div>
+              <div style="font-weight:700; font-size:16px; margin-bottom:5px;">Print-ready PDF</div>
+              <div style="font-size:12.5px; color:#6B645A; line-height:1.4;">300dpi, CMYK with crop marks &amp; bleed — ready for the press.</div>
+            </div>
+            <div onClick="{{ setIndd }}" style="cursor:pointer; border-radius:14px; padding:20px; background:#fff; box-shadow:{{ inddRing }};">
+              <div style="font-size:24px; margin-bottom:12px;">✦</div>
+              <div style="font-weight:700; font-size:16px; margin-bottom:5px;">Adobe InDesign</div>
+              <div style="font-size:12.5px; color:#6B645A; line-height:1.4;">Packaged .indd with linked images &amp; live text — fully editable.</div>
+            </div>
+          </div>
+          <div onClick="{{ toggleBleed }}" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; background:#fff; border-radius:11px; padding:13px 16px; margin-bottom:24px;">
+            <div><div style="font-weight:600; font-size:13.5px;">Crop marks &amp; 3mm bleed</div><div style="font-size:11.5px; color:#9A9182;">Recommended for professional printing</div></div>
+            <div style="width:42px; height:24px; border-radius:999px; background:{{ bleedSwBg }}; position:relative;"><div style="position:absolute; top:2px; left:{{ bleedSwX }}; width:20px; height:20px; border-radius:50%; background:#fff; transition:left .15s;"></div></div>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:flex-end; gap:12px;">
+            <button onClick="{{ closeExport }}" style="border:none; background:none; cursor:pointer; font-family:inherit; font-size:14px; font-weight:600; color:#6B645A;">Cancel</button>
+            <button onClick="{{ generate }}" style="border:none; cursor:pointer; font-family:inherit; font-size:14px; font-weight:700; padding:12px 24px; border-radius:10px; background:{{ accent }}; color:#fff;">Generate {{ formatLabel }}</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{ exportGenerating }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; flex-direction:column; align-items:center; gap:20px; padding:30px 0;">
+            <div style="width:44px; height:44px; border:4px solid #E4DFD5; border-top-color:{{ accent }}; border-radius:50%; animation:spin .8s linear infinite;"></div>
+            <div style="font-family:'Instrument Serif',serif; font-size:26px;">Rendering your booklet…</div>
+            <div style="font-family:'Space Mono',monospace; font-size:12.5px; color:#9A9182;">Laying out {{ totalPages }} pages at {{ pageSizeLabel }}</div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ exportReady }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; flex-direction:column; align-items:center; gap:16px; padding:18px 0;">
+            <div style="width:56px; height:56px; border-radius:50%; background:{{ accent }}; color:#fff; display:flex; align-items:center; justify-content:center; font-size:28px;">✓</div>
+            <div style="font-family:'Instrument Serif',serif; font-size:30px;">Your booklet is ready</div>
+            <div style="font-family:'Space Mono',monospace; font-size:13px; color:#6B645A; background:#fff; border:1px solid #EFEADF; padding:10px 16px; border-radius:10px;">{{ fileName }}</div>
+            <button style="border:none; cursor:pointer; font-family:inherit; font-size:14px; font-weight:700; padding:13px 28px; border-radius:10px; background:#211D17; color:#F6F3ED; margin-top:4px;">Download {{ formatLabel }}</button>
+            <button onClick="{{ closeExport }}" style="border:none; background:none; cursor:pointer; font-family:inherit; font-size:13px; font-weight:600; color:#9A9182;">Back to editor</button>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;startScreen&quot;: { &quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;upload&quot;, &quot;editor&quot;], &quot;default&quot;: &quot;upload&quot;, &quot;tsType&quot;: &quot;'upload' | 'editor'&quot; },
+  &quot;defaultTemplate&quot;: { &quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;promo&quot;, &quot;mega&quot;, &quot;clean&quot;, &quot;bomb&quot;, &quot;spec&quot;, &quot;custom&quot;], &quot;default&quot;: &quot;promo&quot;, &quot;tsType&quot;: &quot;string&quot; },
+  &quot;defaultGrid&quot;: { &quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;2x2&quot;, &quot;2x3&quot;, &quot;3x3&quot;, &quot;3x4&quot;, &quot;4x4&quot;], &quot;default&quot;: &quot;3x3&quot;, &quot;tsType&quot;: &quot;string&quot; },
+  &quot;defaultPageSize&quot;: { &quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;a5&quot;, &quot;a4&quot;, &quot;a3&quot;, &quot;letter&quot;, &quot;square&quot;], &quot;default&quot;: &quot;a4&quot;, &quot;tsType&quot;: &quot;string&quot; },
+  &quot;defaultAccent&quot;: { &quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;red&quot;, &quot;orange&quot;, &quot;magenta&quot;, &quot;green&quot;, &quot;blue&quot;, &quot;purple&quot;], &quot;default&quot;: &quot;red&quot;, &quot;tsType&quot;: &quot;string&quot; },
+  &quot;catalogTitle&quot;: { &quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Grand Hyper — Weekend Deals&quot;, &quot;tsType&quot;: &quot;string&quot; }
+}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.ACCENTS = {
+      red:     { name: 'Hyper Red', color: 'oklch(0.57 0.2 25)',  soft: 'oklch(0.95 0.04 25)',  border: 'oklch(0.85 0.07 25)' },
+      orange:  { name: 'Orange',    color: 'oklch(0.65 0.18 50)',  soft: 'oklch(0.96 0.05 50)',  border: 'oklch(0.86 0.08 50)' },
+      magenta: { name: 'Magenta',   color: 'oklch(0.55 0.21 358)', soft: 'oklch(0.95 0.05 358)', border: 'oklch(0.85 0.08 358)' },
+      green:   { name: 'Fresh',     color: 'oklch(0.52 0.14 152)', soft: 'oklch(0.95 0.04 152)', border: 'oklch(0.84 0.07 152)' },
+      blue:    { name: 'Cool Blue', color: 'oklch(0.5 0.16 252)',  soft: 'oklch(0.95 0.04 252)', border: 'oklch(0.84 0.07 252)' },
+      purple:  { name: 'Purple',    color: 'oklch(0.5 0.18 300)',  soft: 'oklch(0.95 0.04 300)', border: 'oklch(0.84 0.07 300)' },
+    };
+    this.PALETTES = [
+      { key: 'classic',  name: 'Hyper Classic', accent: 'oklch(0.57 0.2 25)',   badge: 'oklch(0.86 0.16 92)' },
+      { key: 'sunset',   name: 'Sunset',        accent: 'oklch(0.65 0.18 50)',   badge: 'oklch(0.83 0.15 85)' },
+      { key: 'orchard',  name: 'Orchard',       accent: 'oklch(0.52 0.14 152)',  badge: 'oklch(0.86 0.16 92)' },
+      { key: 'cobalt',   name: 'Cobalt',        accent: 'oklch(0.5 0.16 252)',   badge: 'oklch(0.8 0.14 78)' },
+      { key: 'berry',    name: 'Berry',         accent: 'oklch(0.55 0.21 358)',  badge: 'oklch(0.84 0.14 92)' },
+      { key: 'midnight', name: 'Midnight',      accent: 'oklch(0.42 0.12 280)',  badge: 'oklch(0.82 0.16 95)' },
+    ];
+    this.PRICING = [
+      { key: 'starter', name: 'Starter', price: '$0',  per: '/forever', tagline: 'For your first flyer.', cta: 'Start free', highlight: false, features: ['1 active project', 'Up to 2 pages', 'CSV & Excel import', 'PDF export (watermarked)', 'Community templates'] },
+      { key: 'studio',  name: 'Studio',  price: '$29', per: '/month',   tagline: 'For busy retail teams.', cta: 'Start 14-day trial', highlight: true, features: ['Unlimited projects', 'Unlimited pages', 'Print-ready PDF, no watermark', 'InDesign export', 'All premium templates', 'Custom brand palettes'] },
+      { key: 'chain',   name: 'Chain',   price: '$99', per: '/month',   tagline: 'For multi-store chains.', cta: 'Talk to sales', highlight: false, features: ['Everything in Studio', 'Shopify & PIM live sync', 'Multi-store catalogs', 'Shared brand kit & roles', 'Priority support', 'SSO & audit log'] },
+    ];
+    this.TAGCOL = { green: 'oklch(0.55 0.14 150)', violet: 'oklch(0.55 0.17 305)', blue: 'oklch(0.52 0.16 252)' };
+    this.SIZES = {
+      a5:     { label: 'A5',        long: 540, ratio: 1.414 },
+      a4:     { label: 'A4',        long: 700, ratio: 1.414 },
+      a3:     { label: 'A3',        long: 860, ratio: 1.414 },
+      letter: { label: 'US Letter', long: 700, ratio: 1.294 },
+      square: { label: 'Square',    long: 580, ratio: 1.0 },
+    };
+    this.GRIDS = {
+      '2x2': { cols: 2, rows: 2 }, '2x3': { cols: 2, rows: 3 }, '3x3': { cols: 3, rows: 3 },
+      '3x4': { cols: 3, rows: 4 }, '4x4': { cols: 4, rows: 4 },
+    };
+    this.BANNERS = {
+      promo: { title: 'WEEKEND DEALS', sub: 'EVERYDAY LOW PRICES' },
+      mega:  { title: 'MEGA SAVERS', sub: 'OUR LOWEST PRICES' },
+      clean: { title: 'LOW PRICES · BIG SAVINGS', sub: 'FRESH PICKS' },
+      bomb:  { title: 'PRICE DROP', sub: 'LIMITED TIME ONLY' },
+      spec:  { title: 'BIG-TICKET BUYS', sub: '0% EMI AVAILABLE' },
+      custom:{ title: 'YOUR SECTION', sub: 'CUSTOM LAYOUT' },
+    };
+    this.RAW = [
+      { n: 'Sunflower Cooking Oil 1.8L', d: 'Heart-healthy · Bottle', c: 'Pantry', was: 5.95, now: 3.50, tag: null },
+      { n: 'Golden Basmati Rice 5kg', d: 'Aged premium grain', c: 'Pantry', was: 12.90, now: 8.95, tag: null },
+      { n: 'Extra Virgin Olive Oil 750ml', d: 'Cold pressed', c: 'Pantry', was: 15.00, now: 9.90, tag: null },
+      { n: 'Penne Pasta 1kg', d: 'Durum wheat', c: 'Pantry', was: 3.20, now: 1.95, tag: null },
+      { n: 'Canned Tomatoes 4 × 400g', d: 'Italian peeled', c: 'Pantry', was: 6.40, now: 3.95, tag: null },
+      { n: 'Fresh Whole Chicken', d: 'Per kg · Farm fresh', c: 'Fresh', was: 4.20, now: 2.75, tag: { t: 'FRESH', col: 'green' } },
+      { n: 'Atlantic Salmon Fillet', d: 'Per kg · Skin-on', c: 'Fresh', was: 18.90, now: 13.50, tag: null },
+      { n: 'Beef Mince 1kg', d: 'Lean · 90/10', c: 'Fresh', was: 9.50, now: 6.95, tag: null },
+      { n: 'Cavendish Bananas 1kg', d: 'Ecuador · Per kg', c: 'Produce', was: 1.30, now: 0.85, tag: { t: '800 pts', col: 'violet' } },
+      { n: 'Hass Avocado 4pk', d: 'Ready to eat', c: 'Produce', was: 5.60, now: 3.40, tag: null },
+      { n: 'Vine Tomatoes 1kg', d: 'Greenhouse grown', c: 'Produce', was: 2.80, now: 1.75, tag: null },
+      { n: 'Greek Yogurt 6 × 150g', d: 'High protein', c: 'Dairy', was: 6.50, now: 4.25, tag: null },
+      { n: 'Mature Cheddar 500g', d: 'Block · Aged 12mo', c: 'Dairy', was: 8.90, now: 5.95, tag: null },
+      { n: 'Fresh Milk 2L', d: 'Full cream', c: 'Dairy', was: 3.40, now: 2.50, tag: null },
+      { n: 'Power Clean Detergent 4L', d: 'Front & top load', c: 'Home', was: 18.95, now: 11.50, tag: null },
+      { n: 'Soft Facial Tissue 6pk', d: '2-ply · 150 sheets', c: 'Home', was: 9.00, now: 5.95, tag: null },
+      { n: 'Lemon Dish Soap 1L', d: 'Tough on grease', c: 'Home', was: 5.40, now: 2.95, tag: { t: '+ FREE sponge', col: 'green' } },
+      { n: 'Kitchen Paper Towels 8pk', d: 'Extra absorbent', c: 'Home', was: 11.90, now: 7.50, tag: null },
+      { n: 'Heavy-Duty Trash Bags 60ct', d: 'Drawstring', c: 'Home', was: 8.20, now: 4.95, tag: null },
+      { n: 'Gold Roast Instant Coffee 200g', d: '100% Arabica', c: 'Beverages', was: 24.50, now: 16.90, tag: null },
+      { n: 'Classic Cola 6 × 330ml', d: 'Multipack cans', c: 'Beverages', was: 7.95, now: 4.50, tag: null },
+      { n: 'Orange Juice 2L', d: 'Not from concentrate', c: 'Beverages', was: 6.20, now: 3.95, tag: null },
+      { n: 'Green Tea 100 bags', d: 'Antioxidant rich', c: 'Beverages', was: 9.40, now: 5.90, tag: null },
+      { n: 'Roasted Mixed Nuts 500g', d: 'Unsalted · Resealable', c: 'Snacks', was: 13.95, now: 8.50, tag: null },
+      { n: 'Sea Salt Potato Chips 6pk', d: 'Sharing size', c: 'Snacks', was: 7.80, now: 4.25, tag: null },
+      { n: 'Dark Chocolate 200g', d: '70% cocoa', c: 'Snacks', was: 5.50, now: 3.20, tag: null },
+      { n: 'Nourish Shampoo 750ml', d: 'For all hair types', c: 'Beauty', was: 14.90, now: 8.95, tag: null },
+      { n: 'Silk Body Wash 1L', d: 'Moisturising', c: 'Beauty', was: 11.50, now: 6.90, tag: null },
+      { n: '55" 4K Smart QLED TV', d: 'Dolby Vision · 144Hz', c: 'Electronics', was: 2899, now: 2299, tag: { t: 'BESTSELLER', col: 'blue' } },
+      { n: 'Digital Air Fryer 6L', d: 'Rapid hot-air', c: 'Electronics', was: 320, now: 199, tag: null },
+      { n: 'Robot Vacuum + Mop', d: 'LiDAR mapping', c: 'Electronics', was: 1599, now: 1099, tag: { t: 'NEW', col: 'blue' } },
+      { n: 'Mega Diapers Pack 120ct', d: 'Size 4 · 9–14kg', c: 'Baby', was: 22.90, now: 14.95, tag: null },
+    ];
+    this._timers = [];
+    const start = props.startScreen === 'editor' ? 'editor' : 'upload';
+    this.state = {
+      screen: start,
+      loggedIn: start === 'editor',
+      projects: this.sampleProjects(),
+      activeProjectId: start === 'editor' ? 'pr1' : null,
+      procStep: 0, procCount: 0,
+      products: start === 'editor' ? this.makeProducts() : [],
+      manualPages: [], pageGrids: {},
+      template: props.defaultTemplate || 'promo',
+      accentKey: props.defaultAccent || 'red',
+      customAccent: '#0EA5A0',
+      badge: 'oklch(0.86 0.16 92)',
+      gridKey: props.defaultGrid || '3x3',
+      pageSize: props.defaultPageSize || 'a4',
+      orientation: 'portrait',
+      banners: JSON.parse(JSON.stringify(this.BANNERS)),
+      cover: { brand: 'GRAND HYPER', headline1: 'WEEKEND', headline2: 'DEALS', burst: 'UP TO 60% OFF', validity: 'VALID 18–24 JUN' },
+      selected: null,
+      editingId: null,
+      exportOpen: false, exportFormat: 'pdf', exportStage: 'config', bleed: true,
+      dragId: null, pageDragId: null, customAccentField: '#0EA5A0',
+      tool: 'select', zoom: 1, leftTab: 'deals',
+      showRulers: true, showGuides: true, showGrid: false,
+      history: [], future: [],
+      catalogName: props.catalogTitle || 'Grand Hyper — Weekend Deals',
+    };
+    this.ZOOMS = [0.5, 0.75, 1, 1.25, 1.5, 2];
+  }
+
+  sampleProjects() {
+    return [
+      { id: 'pr1', name: 'Grand Hyper — Weekend Deals', store: 'GRAND HYPER', accent: 'oklch(0.57 0.2 25)',  badge: 'oklch(0.86 0.16 92)', template: 'promo', gridKey: '3x3', pageSize: 'a4', dealCount: 32, updated: 'Edited 2h ago',   headline1: 'WEEKEND', headline2: 'DEALS', burst: 'UP TO 60% OFF' },
+      { id: 'pr2', name: 'FreshMart — Ramadan Specials', store: 'FRESHMART', accent: 'oklch(0.52 0.14 152)', badge: 'oklch(0.86 0.16 92)', template: 'mega',  gridKey: '3x4', pageSize: 'a4', dealCount: 32, updated: 'Edited yesterday', headline1: 'RAMADAN', headline2: 'SPECIALS', burst: 'SAVE BIG' },
+      { id: 'pr3', name: 'TechZone — Black Friday', store: 'TECHZONE', accent: 'oklch(0.5 0.16 252)', badge: 'oklch(0.8 0.14 78)', template: 'spec', gridKey: '2x3', pageSize: 'a4', dealCount: 32, updated: 'Edited 3d ago', headline1: 'BLACK', headline2: 'FRIDAY', burst: '0% EMI' },
+    ];
+  }
+
+  makeProducts() {
+    return this.RAW.map((r, i) => ({
+      id: 'p' + i, name: r.n, desc: r.d, category: r.c, was: r.was, now: r.now, tag: r.tag,
+      align: 'left', text: '',
+      showDesc: true, showBadge: true, showImage: true, showTitle: true, showPrice: true, showDiscount: true, showText: false,
+      blank: false, ov: {},
+    }));
+  }
+  componentWillUnmount() { this._timers.forEach((t) => { clearTimeout(t); clearInterval(t); }); }
+
+  // ---- navigation ----
+  go(screen) { this.setState({ screen }); }
+  goHome() { this.setState({ screen: 'upload' }); }
+  goPricing() { this.setState({ screen: 'pricing' }); }
+  goSignin() { this.setState({ screen: 'signin' }); }
+  goSignup() { this.setState({ screen: 'signup' }); }
+  toggleAuthMode() { this.setState((s) => ({ screen: s.screen === 'signup' ? 'signin' : 'signup' })); }
+  doAuth() { this.setState({ loggedIn: true, screen: 'projects' }); }
+  goProjects() { this.saveActive(); this.setState({ screen: 'projects' }); }
+  newProject() { this.setState({ screen: 'upload', activeProjectId: null }); }
+
+  openProject(id) {
+    const p = this.state.projects.find((x) => x.id === id);
+    if (!p) return;
+    this.setState({
+      screen: 'editor', activeProjectId: id, loggedIn: true,
+      catalogName: p.name,
+      template: p.template, gridKey: p.gridKey, pageSize: p.pageSize, orientation: 'portrait',
+      accentKey: 'custom', customAccent: p.accent, badge: p.badge,
+      products: this.makeProducts(), manualPages: [], pageGrids: {},
+      cover: { brand: p.store, headline1: p.headline1, headline2: p.headline2, burst: p.burst, validity: 'VALID THIS WEEK' },
+      banners: JSON.parse(JSON.stringify(this.BANNERS)),
+      selected: null, editingId: null, history: [], future: [], leftTab: 'deals',
+    });
+  }
+  saveActive() {
+    const id = this.state.activeProjectId;
+    if (!id) return;
+    this.setState((s) => {
+      const accent = s.accentKey === 'custom' ? s.customAccent : (this.ACCENTS[s.accentKey] || this.ACCENTS.red).color;
+      return { projects: s.projects.map((p) => p.id === id ? { ...p, name: s.catalogName, template: s.template, gridKey: s.gridKey, pageSize: s.pageSize, accent, badge: s.badge, dealCount: s.products.length, updated: 'Just now', store: s.cover.brand, headline1: s.cover.headline1, headline2: s.cover.headline2, burst: s.cover.burst } : p) };
+    });
+  }
+
+  startProcessing() {
+    this.setState({ screen: 'processing', procStep: 0, procCount: 0 });
+    const total = this.RAW.length;
+    let c = 0;
+    const countT = setInterval(() => { c += 2; this.setState({ procCount: Math.min(c, total) }); if (c >= total) clearInterval(countT); }, 110);
+    this._timers.push(countT);
+    [700, 1350, 2000, 2600].forEach((t, idx) => this._timers.push(setTimeout(() => this.setState({ procStep: idx + 1 }), t)));
+    this._timers.push(setTimeout(() => {
+      const id = 'pr' + Date.now();
+      const np = { id, name: 'Untitled catalog', store: 'YOUR STORE', accent: 'oklch(0.57 0.2 25)', badge: 'oklch(0.86 0.16 92)', template: 'promo', gridKey: '3x3', pageSize: 'a4', dealCount: this.RAW.length, updated: 'Just now', headline1: 'WEEKEND', headline2: 'DEALS', burst: 'UP TO 60% OFF' };
+      this.setState((s) => ({
+        screen: 'editor', loggedIn: true, activeProjectId: id, projects: [np, ...s.projects],
+        products: this.makeProducts(), manualPages: [], pageGrids: {}, catalogName: np.name,
+        accentKey: 'custom', customAccent: np.accent, badge: np.badge, template: 'promo', gridKey: '3x3', pageSize: 'a4',
+        cover: { brand: np.store, headline1: np.headline1, headline2: np.headline2, burst: np.burst, validity: 'VALID THIS WEEK' },
+        banners: JSON.parse(JSON.stringify(this.BANNERS)), selected: null, history: [], future: [],
+      }));
+    }, 3400));
+  }
+
+  // ---- deals reorder / edit ----
+  reorder(targetId) {
+    this.setState((s) => {
+      if (!s.dragId || s.dragId === targetId) return null;
+      const arr = [...s.products];
+      const from = arr.findIndex((p) => p.id === s.dragId);
+      const to = arr.findIndex((p) => p.id === targetId);
+      if (from < 0 || to < 0 || from === to) return null;
+      const [m] = arr.splice(from, 1); arr.splice(to, 0, m);
+      return { products: arr };
+    });
+  }
+  moveProduct(id, dir) {
+    this.record();
+    this.setState((s) => {
+      const arr = [...s.products]; const i = arr.findIndex((p) => p.id === id);
+      if (i >= 0) { const j = i + dir; if (j < 0 || j >= arr.length) return null; const [m] = arr.splice(i, 1); arr.splice(j, 0, m); return { products: arr }; }
+      const manualPages = s.manualPages.map((mp) => {
+        const k = (mp.items || []).findIndex((p) => p.id === id);
+        if (k < 0) return mp;
+        const items = [...mp.items]; const j = k + dir; if (j < 0 || j >= items.length) return mp;
+        const [m] = items.splice(k, 1); items.splice(j, 0, m); return { ...mp, items };
+      });
+      return { manualPages };
+    });
+  }
+  record() {
+    this.setState((s) => {
+      const snap = { products: JSON.parse(JSON.stringify(s.products)), cover: JSON.parse(JSON.stringify(s.cover)), banners: JSON.parse(JSON.stringify(s.banners)), manualPages: JSON.parse(JSON.stringify(s.manualPages)), pageGrids: { ...(s.pageGrids || {}) } };
+      return { history: [...s.history, snap].slice(-60), future: [] };
+    });
+  }
+  undo() {
+    this.setState((s) => {
+      if (!s.history.length) return null;
+      const prev = s.history[s.history.length - 1];
+      const cur = { products: JSON.parse(JSON.stringify(s.products)), cover: JSON.parse(JSON.stringify(s.cover)), banners: JSON.parse(JSON.stringify(s.banners)), manualPages: JSON.parse(JSON.stringify(s.manualPages)), pageGrids: { ...(s.pageGrids || {}) } };
+      return { products: prev.products, cover: prev.cover, banners: prev.banners, manualPages: prev.manualPages || [], pageGrids: prev.pageGrids || {}, history: s.history.slice(0, -1), future: [cur, ...s.future].slice(0, 60) };
+    });
+  }
+  redo() {
+    this.setState((s) => {
+      if (!s.future.length) return null;
+      const next = s.future[0];
+      const cur = { products: JSON.parse(JSON.stringify(s.products)), cover: JSON.parse(JSON.stringify(s.cover)), banners: JSON.parse(JSON.stringify(s.banners)), manualPages: JSON.parse(JSON.stringify(s.manualPages)), pageGrids: { ...(s.pageGrids || {}) } };
+      return { products: next.products, cover: next.cover, banners: next.banners, manualPages: next.manualPages || [], pageGrids: next.pageGrids || {}, future: s.future.slice(1), history: [...s.history, cur].slice(-60) };
+    });
+  }
+  zoomStep(dir) {
+    const z = this.state.zoom; let i = 0; let best = 1e9;
+    this.ZOOMS.forEach((v, k) => { const d = Math.abs(v - z); if (d < best) { best = d; i = k; } });
+    const ni = Math.max(0, Math.min(this.ZOOMS.length - 1, i + dir));
+    this.setState({ zoom: this.ZOOMS[ni] });
+  }
+  jumpTo(id) {
+    const c = document.getElementById('sp-canvas'); const el = document.getElementById(id);
+    if (c && el) c.scrollTo({ top: el.offsetTop - 16, behavior: 'smooth' });
+  }
+  findAnyProduct(s, id) {
+    let p = s.products.find((x) => x.id === id);
+    if (p) return p;
+    for (const mp of s.manualPages) { p = (mp.items || []).find((x) => x.id === id); if (p) return p; }
+    return null;
+  }
+  mapBothPools(s, id, fn) {
+    let found = false;
+    const products = s.products.map((p) => { if (p.id === id) { found = true; return fn(p); } return p; });
+    if (found) return { products };
+    const manualPages = s.manualPages.map((mp) => ({ ...mp, items: (mp.items || []).map((p) => p.id === id ? fn(p) : p) }));
+    return { manualPages };
+  }
+  updateProduct(id, patch) {
+    this.record();
+    this.setState((s) => this.mapBothPools(s, id, (p) => ({ ...p, ...patch })));
+  }
+  updateOv(id, patch) {
+    this.record();
+    this.setState((s) => this.mapBothPools(s, id, (p) => ({ ...p, ov: { ...(p.ov || {}), ...patch } })));
+  }
+  liveProduct(id, patch) {
+    this.setState((s) => this.mapBothPools(s, id, (p) => ({ ...p, ...patch })));
+  }
+  startEdit(id, field) { this.record(); this.setState({ editingId: { id, field }, selected: { type: 'product', id } }); }
+  stopEdit() { this.setState({ editingId: null }); }
+  duplicateProduct(id) {
+    this.record();
+    this.setState((s) => {
+      if (!s.products.some((p) => p.id === id)) {
+        const manualPages = s.manualPages.map((mp) => {
+          const i = (mp.items || []).findIndex((p) => p.id === id);
+          if (i < 0) return mp;
+          const copy = { ...mp.items[i], id: 'p' + Date.now() };
+          const items = [...mp.items]; items.splice(i + 1, 0, copy);
+          this._lastDup = copy.id;
+          return { ...mp, items };
+        });
+        return { manualPages, selected: { type: 'product', id: this._lastDup } };
+      }
+      const i = s.products.findIndex((p) => p.id === id); if (i < 0) return null;
+      const copy = { ...s.products[i], id: 'p' + Date.now() };
+      const arr = [...s.products]; arr.splice(i + 1, 0, copy);
+      return { products: arr, selected: { type: 'product', id: copy.id } };
+    });
+  }
+  removeProduct(id) {
+    this.record();
+    this.setState((s) => ({ products: s.products.filter((p) => p.id !== id), manualPages: s.manualPages.map((mp) => ({ ...mp, items: (mp.items || []).filter((p) => p.id !== id) })), selected: null }));
+  }
+  addDeal() {
+    this.record();
+    const copy = { id: 'p' + Date.now(), name: 'New deal', desc: 'Add a description', category: 'Pantry', was: 9.99, now: 6.99, tag: null, align: 'left', text: '', showDesc: true, showBadge: true, showImage: true, showTitle: true, showPrice: true, showDiscount: true, showText: false, blank: false, ov: {} };
+    this.setState((s) => ({ products: [...s.products, copy], selected: { type: 'product', id: copy.id }, leftTab: 'deals' }));
+  }
+  addBlank() {
+    this.record();
+    const copy = { id: 'b' + Date.now(), name: '', desc: '', category: 'CUSTOM', was: 0, now: 0, tag: null, align: 'left', text: '', showDesc: true, showBadge: false, showImage: true, showTitle: true, showPrice: true, showDiscount: false, showText: false, blank: true, ov: {} };
+    this.setState((s) => ({ products: [...s.products, copy], selected: { type: 'product', id: copy.id }, leftTab: 'deals' }));
+  }
+
+  // ---- manual pages ----
+  addBlankPage() {
+    this.record();
+    const mp = { id: 'm' + Date.now(), title: 'NEW PAGE', gridKey: this.state.gridKey, items: [] };
+    this.setState((s) => ({ manualPages: [...s.manualPages, mp], leftTab: 'pages' }));
+  }
+  blankDeal() {
+    return { id: 'b' + Date.now() + Math.floor(Math.random() * 999), name: '', desc: '', category: 'CUSTOM', was: 0, now: 0, tag: null, align: 'left', text: '', showDesc: true, showBadge: false, showImage: true, showTitle: true, showPrice: true, showDiscount: false, showText: false, blank: true, ov: {} };
+  }
+  addDealToPage(mpId) {
+    this.record();
+    const deal = this.blankDeal();
+    this.setState((s) => ({ manualPages: s.manualPages.map((mp) => mp.id === mpId ? { ...mp, items: [...(mp.items || []), deal] } : mp), selected: { type: 'product', id: deal.id } }));
+  }
+  setPageGrid(pIdx, gKey) {
+    this.record();
+    this.setState((s) => ({ pageGrids: { ...(s.pageGrids || {}), [pIdx]: gKey } }));
+  }
+  setManualGrid(mpId, gKey) {
+    this.record();
+    this.setState((s) => ({ manualPages: s.manualPages.map((mp) => mp.id === mpId ? { ...mp, gridKey: gKey } : mp) }));
+  }
+  reorderManualPages(targetId) {
+    this.setState((s) => {
+      if (!s.pageDragId || s.pageDragId === targetId) return null;
+      const arr = [...s.manualPages];
+      const from = arr.findIndex((m) => m.id === s.pageDragId);
+      const to = arr.findIndex((m) => m.id === targetId);
+      if (from < 0 || to < 0 || from === to) return null;
+      const [m] = arr.splice(from, 1); arr.splice(to, 0, m);
+      return { manualPages: arr };
+    });
+  }
+  removeManualPage(id) {
+    this.record();
+    this.setState((s) => ({ manualPages: s.manualPages.filter((m) => m.id !== id) }));
+  }
+
+  generateExport() {
+    this.setState({ exportStage: 'generating' });
+    this._timers.push(setTimeout(() => this.setState({ exportStage: 'ready' }), 1900));
+  }
+  stripeBg() { return 'repeating-linear-gradient(135deg,#F3F1EC,#F3F1EC 11px,#EDEAE3 11px,#EDEAE3 22px)'; }
+  money(n) { return '$' + Number(n).toFixed(2); }
+  ring(active, color) { return active ? '0 0 0 2px ' + color : '0 0 0 1px #EAE6DD'; }
+  swX(on) { return on ? '18px' : '2px'; }
+
+  renderVals() {
+    const S = this.state;
+    const ac = S.accentKey === 'custom'
+      ? { name: 'Custom', color: S.customAccent, soft: 'color-mix(in oklab, ' + S.customAccent + ' 12%, #fff)', border: 'color-mix(in oklab, ' + S.customAccent + ' 38%, #fff)' }
+      : (this.ACCENTS[S.accentKey] || this.ACCENTS.red);
+    const accent = ac.color;
+    const badge = S.badge;
+    const stripe = this.stripeBg();
+    const tpl = S.template;
+    const sz = this.SIZES[S.pageSize] || this.SIZES.a4;
+    let w, h;
+    if (S.orientation === 'landscape') { w = sz.long; h = Math.round(sz.long / sz.ratio); }
+    else { h = sz.long; w = Math.round(sz.long / sz.ratio); }
+    const cap = 660; const scale = w > cap ? cap / w : 1;
+    const pageW = Math.round(w * scale), pageH = Math.round(h * scale);
+    const gridTokens = (gKey) => {
+      const g = this.GRIDS[gKey] || this.GRIDS['3x3'];
+      const cols = g.cols, rows = g.rows;
+      const small = cols >= 4, mid = cols === 3;
+      const cellGap = small ? 8 : 11;
+      const cellRadBase = tpl === 'clean' ? 6 : (small ? 9 : 13);
+      return { gKey, g, cols, rows, perPage: cols * rows, small, mid, cellGap, cellRadBase,
+        cellRowH: Math.max(96, Math.floor((pageH - 104 - (rows - 1) * cellGap) / rows)),
+        gridCols: 'repeat(' + cols + ', 1fr)',
+        saveDim: small ? 32 : (mid ? 42 : 50), saveLblF: small ? 6.5 : 8.5, savePctF: small ? 11 : 15,
+        nameF: small ? 11 : (mid ? 12.5 : 14.5), priceIntF: small ? 17 : (mid ? 21 : 26), priceCentF: small ? 9.5 : (mid ? 11 : 13) };
+    };
+    const gtk = gridTokens(S.gridKey);
+
+    const enrichItem = (p, i, tk) => {
+      const small = tk.small;
+      const cellRadBase = tk.cellRadBase;
+      const ov = p.ov || {};
+      const hasName = (p.name || '').trim().length > 0;
+      const hasDesc = (p.desc || '').trim().length > 0;
+      const hasNow = Number(p.now) > 0;
+      const hasWas = Number(p.was) > 0;
+      const savePct = hasWas && hasNow ? Math.round(((p.was - p.now) / p.was) * 100) : 0;
+      const [nowInt, nowCents] = Number(p.now).toFixed(2).split('.');
+      let cellBg = '#fff', border = '1px solid #ECE8DF', cellText = '#211D17', pillBg = accent, pillText = '#fff';
+      let usePill = true, descCol = '#9A9182', imgBg = stripe, strikeCol = '#B7AE9E', showTopStripe = false;
+      if (tpl === 'mega') { showTopStripe = true; }
+      else if (tpl === 'clean') { border = '1px solid #F0ECE3'; usePill = false; }
+      else if (tpl === 'bomb') { cellBg = ac.soft; border = '1px solid ' + ac.border; }
+      else if (tpl === 'spec') { border = '2px solid ' + ac.border; }
+      if (ov.bg === 'white') cellBg = '#fff';
+      else if (ov.bg === 'cream') cellBg = '#FBF6EC';
+      else if (ov.bg === 'tint') cellBg = ac.soft;
+      const invert = ov.bg === 'accent';
+      if (invert) { cellBg = accent; cellText = '#fff'; border = '1px solid ' + accent; pillBg = '#fff'; pillText = accent; descCol = 'rgba(255,255,255,.78)'; imgBg = 'rgba(255,255,255,.14)'; strikeCol = 'rgba(255,255,255,.7)'; usePill = true; showTopStripe = false; }
+      if (ov.borderOn) border = (ov.borderW || 2) + 'px solid ' + (ov.borderColor || accent);
+      const row = ov.imgPos === 'left';
+      const padMap = { 0: '4px 8px', 1: '9px 11px', 2: '15px 16px', 4: '24px 26px' };
+      const padv = ov.pad == null ? 1 : ov.pad;
+      const radius = ov.radius == null ? cellRadBase : ov.radius;
+      const opacity = ov.opacity == null ? 1 : ov.opacity;
+      const nameWeight = ov.nameWeight || 700;
+      const curAlign = ov.align || p.align || 'left';
+      const isSel = (S.selected && S.selected.type === 'product' && S.selected.id === p.id);
+      let bs = isSel ? '0 0 0 2px ' + accent : '0 0 0 1px #ECE8DF';
+      if (ov.shadow) bs += ', 0 8px 22px rgba(33,29,23,.16)';
+      const fImage = p.showImage !== false;
+      const fTitle = p.showTitle !== false;
+      const fPrice = p.showPrice !== false;
+      const fDiscount = p.showDiscount !== false;
+      const fText = !!p.showText;
+      const editing = S.editingId && S.editingId.id === p.id;
+      const editingName = !!editing && S.editingId.field === 'name';
+      const editingDesc = !!editing && S.editingId.field === 'desc';
+      const placeholderCol = invert ? 'rgba(255,255,255,.55)' : '#C2BBA8';
+      const showDesc = (p.showDesc !== false) && !small;
+      return {
+        ...p, index: i, num: String(i + 1).padStart(2, '0'),
+        catUpper: (p.category || '').toUpperCase(),
+        wasText: this.money(p.was), nowText: this.money(p.now), nowInt, nowCents, savePct,
+        payIn4: this.money(p.now / 4), emi: this.money(p.now / 12),
+        imgBg, cellBg, cellText, border, pillBg, pillText, usePill, plainPrice: !usePill, descCol, strikeCol,
+        showTopStripe: showTopStripe && !row,
+        cellDir: row ? 'row' : 'column',
+        imgFlex: row ? '0 0 92px' : '1 1 auto', imgMinH: row ? '0px' : '34px',
+        infoFlex: row ? '1 1 auto' : '0 0 auto', infoPad: padMap[padv] || padMap[1],
+        cellRadius: radius, cellOpacity: opacity, nameWeight, nameTransform: ov.upper ? 'uppercase' : 'none',
+        colSpan: ov.span2 ? 'span 2' : 'span 1',
+        align: curAlign, justify: curAlign === 'center' ? 'center' : (curAlign === 'right' ? 'flex-end' : 'flex-start'),
+        showImage: fImage, imgLabel: p.blank ? 'IMAGE' : 'PRODUCT SHOT',
+        showTitle: fTitle,
+        nameDisplay: hasName ? p.name : (p.blank ? 'Product title' : 'Untitled deal'),
+        nameColor: hasName ? 'inherit' : placeholderCol,
+        isEditingName: editingName, notEditingName: !editingName,
+        isEditingDesc: editingDesc, notEditingDesc: !editingDesc,
+        descDisplay: hasDesc ? p.desc : 'Add a description',
+        descColShown: hasDesc ? descCol : placeholderCol,
+        showText: fText && !small, textDisplay: (p.text && p.text.trim()) ? p.text : 'Body text — add details, terms or a callout.',
+        showPrice: fPrice, pricePlaceholder: fPrice && !hasNow,
+        showDiscountRow: fDiscount && hasWas && Number(p.was) > Number(p.now) && hasNow,
+        showDesc,
+        showBadge: p.showBadge !== false && savePct > 0 && fImage,
+        nameF: tk.nameF, saveDim: tk.saveDim, saveLblF: tk.saveLblF, savePctF: tk.savePctF, priceIntF: tk.priceIntF, priceCentF: tk.priceCentF,
+        showChips: tpl === 'spec' && tk.cols <= 2 && !invert && fPrice,
+        hasTag: !!p.tag, tagText: p.tag ? p.tag.t : '', tagBg: p.tag ? (this.TAGCOL[p.tag.col] || '#211D17') : '#211D17',
+        ringStyle: bs,
+        cellDraggable: !editing,
+        dragOpacity: p.id === S.dragId ? '0.45' : '1',
+        onSelect: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.setState({ selected: { type: 'product', id: p.id } }); },
+        onDragStart: () => this.setState({ dragId: p.id }),
+        onDragEnter: () => this.reorder(p.id),
+        onNameDbl: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.startEdit(p.id, 'name'); },
+        onDescDbl: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.startEdit(p.id, 'desc'); },
+        editName: (e) => this.liveProduct(p.id, { name: e.target.value }),
+        editDesc: (e) => this.liveProduct(p.id, { desc: e.target.value }),
+        editKey: (e) => { if (e.key === 'Enter' || e.key === 'Escape') e.target.blur(); },
+        focusRef: (el) => { if (el) { el.focus(); try { const v = el.value; el.setSelectionRange(v.length, v.length); } catch (_) {} } },
+      };
+    };
+
+    // ---- auto-flow content pages, paginated by each page's own grid ----
+    const pageGrids = S.pageGrids || {};
+    const pages = [];
+    let gi = 0, pIdx = 0;
+    while (gi < S.products.length) {
+      const gKey = pageGrids[pIdx] || S.gridKey;
+      const tk = gridTokens(gKey);
+      const slice = S.products.slice(gi, gi + tk.perPage);
+      pages.push({ tk, gKey, rawItems: slice, startIndex: gi, pIdx });
+      gi += tk.perPage; pIdx++;
+    }
+    if (pages.length === 0) { const tk = gridTokens(S.gridKey); pages.push({ tk, gKey: S.gridKey, rawItems: [], startIndex: 0, pIdx: 0 }); }
+    const contentPages = pages.length;
+    pages.forEach((pg, i) => {
+      pg.idx0 = i; pg.pageNo = i + 1; pg.totalPages = contentPages; pg.pageNoOverall = i + 2;
+      pg.items = pg.rawItems.map((p, k) => enrichItem(p, pg.startIndex + k, pg.tk));
+      pg.gridCols = pg.tk.gridCols; pg.cellGap = pg.tk.cellGap; pg.cellRowH = pg.tk.cellRowH;
+      pg.gridSelect = Object.keys(this.GRIDS).map((k) => ({ label: k.replace('x', '×'), bg: k === pg.gKey ? '#fff' : 'transparent', fg: k === pg.gKey ? accent : 'rgba(255,255,255,.82)', onSelect: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.setPageGrid(pg.pIdx, k); } }));
+    });
+
+    // ---- manual pages: each holds its own deals + grid ----
+    const manualPagesView = S.manualPages.map((mp, i) => {
+      const gKey = mp.gridKey || S.gridKey;
+      const tk = gridTokens(gKey);
+      const items = (mp.items || []).map((p, k) => enrichItem(p, k, tk));
+      return {
+        id: mp.id, domId: 'sp-mp-' + mp.id, idx: i, title: mp.title || 'NEW PAGE',
+        items, isEmpty: items.length === 0, hasItems: items.length > 0, tk, gridCols: tk.gridCols, cellGap: tk.cellGap, cellRowH: tk.cellRowH,
+        addDeal: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.addDealToPage(mp.id); },
+        gridSelect: Object.keys(this.GRIDS).map((k) => ({ label: k.replace('x', '×'), bg: k === gKey ? '#fff' : 'transparent', fg: k === gKey ? accent : 'rgba(255,255,255,.82)', onSelect: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.setManualGrid(mp.id, k); } })),
+      };
+    });
+    const totalPages = contentPages + 1 + S.manualPages.length;
+
+    const accents = Object.keys(this.ACCENTS).map((k) => ({
+      key: k, name: this.ACCENTS[k].name, color: this.ACCENTS[k].color,
+      ring: k === S.accentKey ? '0 0 0 2px #FBF9F4, 0 0 0 4px ' + this.ACCENTS[k].color : '0 0 0 1px #E4DFD5',
+      onSelect: () => this.setState({ accentKey: k }),
+    }));
+    const palettes = this.PALETTES.map((p) => {
+      const active = S.accentKey === 'custom' && S.customAccent === p.accent && S.badge === p.badge;
+      return { name: p.name, accent: p.accent, badge: p.badge, active, check: active ? accent : 'transparent', ring: active ? '0 0 0 2px ' + accent : '0 0 0 1px #EAE6DD', onSelect: () => this.setState({ accentKey: 'custom', customAccent: p.accent, badge: p.badge }) };
+    });
+    const customActive = S.accentKey === 'custom';
+    const tplDefs = [
+      { key: 'promo', name: 'Promo Grid', desc: 'Clean deal cells' },
+      { key: 'mega', name: 'Mega Saver', desc: 'Bold accent-bar cells' },
+      { key: 'clean', name: 'Low Price', desc: 'Minimal, plain prices' },
+      { key: 'bomb', name: 'Price Drop', desc: 'Tinted, price-forward' },
+      { key: 'spec', name: 'Big-Ticket', desc: 'Specs + finance chips' },
+      { key: 'custom', name: 'Custom', desc: 'Style each cell yourself' },
+    ];
+    const templates = tplDefs.map((t) => ({ ...t, ringStyle: this.ring(t.key === S.template, accent), check: t.key === S.template ? accent : 'transparent', onSelect: () => this.setState({ template: t.key }) }));
+    const grids = Object.keys(this.GRIDS).map((k) => {
+      const g = this.GRIDS[k]; const active = k === S.gridKey;
+      return { key: k, label: k.replace('x', '×'), cols: g.cols, miniCols: 'repeat(' + g.cols + ', 1fr)', cells: Array.from({ length: g.cols * g.rows }), dot: active ? accent : '#D5CEC1', txt: active ? '#211D17' : '#9A9182', ring: this.ring(active, accent), onSelect: () => this.setState({ gridKey: k }) };
+    });
+    const sizes = Object.keys(this.SIZES).map((k) => ({ key: k, label: this.SIZES[k].label, ring: this.ring(k === S.pageSize, accent), onSelect: () => this.setState({ pageSize: k }) }));
+    const segOn = { bg: '#fff', fg: '#211D17' }, segOff = { bg: 'transparent', fg: '#9A9182' };
+    const port = S.orientation === 'portrait', land = S.orientation === 'landscape';
+
+    const selObj = S.selected;
+    const selProduct = selObj && selObj.type === 'product' ? this.findAnyProduct(S, selObj.id) : null;
+    const inspMode = !selObj ? 'none' : (selProduct ? 'product' : selObj.type);
+    const ban = S.banners[tpl] || this.BANNERS[tpl];
+
+    let sel = null;
+    if (selProduct) {
+      const sp = selProduct;
+      const id = sp.id;
+      const ov = sp.ov || {};
+      const savePct = (sp.was > 0 && sp.now > 0) ? Math.round(((sp.was - sp.now) / sp.was) * 100) : 0;
+      const tagColors = ['green', 'violet', 'blue'].map((ck) => ({ color: this.TAGCOL[ck], ring: (sp.tag && sp.tag.col === ck) ? '0 0 0 2px #FBF9F4, 0 0 0 4px ' + this.TAGCOL[ck] : '0 0 0 1px #E4DFD5', onSelect: () => this.updateProduct(id, { tag: { t: (sp.tag && sp.tag.t) || 'NEW', col: ck } }) }));
+      const seg = (active) => active ? segOn : segOff;
+      const curAlign = ov.align || sp.align || 'left';
+      const aligns = ['left', 'center', 'right'].map((a) => ({ key: a, label: a[0].toUpperCase() + a.slice(1), bg: seg(curAlign === a).bg, fg: seg(curAlign === a).fg, onSelect: () => this.updateOv(id, { align: a }) }));
+      const curBg = ov.bg || 'default';
+      const bgs = [
+        { key: 'default', label: 'Default', sw: '#fff' }, { key: 'white', label: 'White', sw: '#fff' },
+        { key: 'cream', label: 'Cream', sw: '#FBF6EC' }, { key: 'tint', label: 'Tint', sw: ac.soft }, { key: 'accent', label: 'Accent', sw: accent },
+      ].map((b) => ({ ...b, ring: curBg === b.key ? '0 0 0 2px #FBF9F4, 0 0 0 4px ' + accent : '0 0 0 1px #E4DFD5', onSelect: () => this.updateOv(id, { bg: b.key }) }));
+      const curPad = ov.pad == null ? 1 : ov.pad;
+      const pads = [{ k: 0, l: 'XS' }, { k: 1, l: 'S' }, { k: 2, l: 'M' }, { k: 4, l: 'L' }].map((p) => ({ label: p.l, bg: seg(curPad === p.k).bg, fg: seg(curPad === p.k).fg, onSelect: () => this.updateOv(id, { pad: p.k }) }));
+      const curWeight = ov.nameWeight || 700;
+      const fieldDefs = [
+        { k: 'showImage', l: 'Image placeholder' }, { k: 'showTitle', l: 'Title' }, { k: 'showDesc', l: 'Description' },
+        { k: 'showText', l: 'Body text' }, { k: 'showPrice', l: 'Price' }, { k: 'showDiscount', l: 'Discount / was price' }, { k: 'showBadge', l: 'Save amount badge' },
+      ];
+      const fieldRows = fieldDefs.map((f) => {
+        const on = f.k === 'showText' ? !!sp.showText : sp[f.k] !== false;
+        return { label: f.l, on, swBg: on ? accent : '#D5CEC1', swX: this.swX(on), onToggle: () => this.updateProduct(id, { [f.k]: !on }) };
+      });
+      sel = {
+        headerTitle: sp.blank ? 'Edit element' : 'Edit deal',
+        name: sp.name, desc: sp.desc, text: sp.text || '', was: sp.was, now: sp.now, category: sp.category, savePct,
+        tagText: sp.tag ? sp.tag.t : '',
+        setName: (e) => this.updateProduct(id, { name: e.target.value }),
+        setDesc: (e) => this.updateProduct(id, { desc: e.target.value }),
+        setText: (e) => this.updateProduct(id, { text: e.target.value }),
+        setWas: (e) => { const v = parseFloat(e.target.value); this.updateProduct(id, { was: isNaN(v) ? 0 : v }); },
+        setNow: (e) => { const v = parseFloat(e.target.value); this.updateProduct(id, { now: isNaN(v) ? 0 : v }); },
+        setTag: (e) => { const v = e.target.value; this.updateProduct(id, { tag: v ? { t: v, col: (sp.tag && sp.tag.col) || 'green' } : null }); },
+        tagColors, aligns, bgs, pads, fieldRows,
+        toggleSpan: () => this.updateOv(id, { span2: !ov.span2 }),
+        spanSwBg: ov.span2 ? accent : '#D5CEC1', spanSwX: this.swX(!!ov.span2),
+        imgTopBg: seg(ov.imgPos !== 'left').bg, imgTopFg: seg(ov.imgPos !== 'left').fg,
+        imgLeftBg: seg(ov.imgPos === 'left').bg, imgLeftFg: seg(ov.imgPos === 'left').fg,
+        setImgTop: () => this.updateOv(id, { imgPos: 'top' }), setImgLeft: () => this.updateOv(id, { imgPos: 'left' }),
+        wRegBg: seg(curWeight === 400).bg, wRegFg: seg(curWeight === 400).fg,
+        wMedBg: seg(curWeight === 600).bg, wMedFg: seg(curWeight === 600).fg,
+        wBoldBg: seg(curWeight >= 700).bg, wBoldFg: seg(curWeight >= 700).fg,
+        setWReg: () => this.updateOv(id, { nameWeight: 400 }), setWMed: () => this.updateOv(id, { nameWeight: 600 }), setWBold: () => this.updateOv(id, { nameWeight: 800 }),
+        upperOn: !!ov.upper, toggleUpper: () => this.updateOv(id, { upper: !ov.upper }),
+        upperSwBg: ov.upper ? accent : '#D5CEC1', upperSwX: this.swX(!!ov.upper),
+        radius: ov.radius == null ? gtk.cellRadBase : ov.radius,
+        setRadius: (e) => this.updateOv(id, { radius: parseInt(e.target.value, 10) }),
+        opacity: ov.opacity == null ? 1 : ov.opacity, opacityPct: Math.round((ov.opacity == null ? 1 : ov.opacity) * 100),
+        setOpacity: (e) => this.updateOv(id, { opacity: parseInt(e.target.value, 10) / 100 }),
+        shadowOn: !!ov.shadow, toggleShadow: () => this.updateOv(id, { shadow: !ov.shadow }),
+        shadowSwBg: ov.shadow ? accent : '#D5CEC1', shadowSwX: this.swX(!!ov.shadow),
+        borderOn: !!ov.borderOn, toggleBorder: () => this.updateOv(id, { borderOn: !ov.borderOn }),
+        borderSwBg: ov.borderOn ? accent : '#D5CEC1', borderSwX: this.swX(!!ov.borderOn),
+        borderW: ov.borderW || 2, setBorderW: (e) => this.updateOv(id, { borderW: parseInt(e.target.value, 10) }),
+        borderColors: ['accent', '#211D17', '#B7AE9E'].map((c) => { const col = c === 'accent' ? accent : c; const cur = ov.borderColor || accent; return { color: col, ring: (cur === col) ? '0 0 0 2px #FBF9F4, 0 0 0 4px ' + col : '0 0 0 1px #E4DFD5', onSelect: () => this.updateOv(id, { borderColor: col }) }; }),
+        resetStyle: () => this.updateProduct(id, { ov: {} }),
+        moveUp: () => this.moveProduct(id, -1),
+        moveDown: () => this.moveProduct(id, 1),
+        posLabel: sp.blank && !S.products.some((p) => p.id === id) ? 'on a page' : ('#' + (S.products.findIndex((p) => p.id === id) + 1) + ' of ' + S.products.length),
+        duplicate: () => this.duplicateProduct(id),
+        remove: () => this.removeProduct(id),
+      };
+    }
+    const cov = {
+      brand: S.cover.brand, headline1: S.cover.headline1, headline2: S.cover.headline2, burst: S.cover.burst, validity: S.cover.validity,
+      setBrand: (e) => this.setState({ cover: { ...S.cover, brand: e.target.value } }),
+      setH1: (e) => this.setState({ cover: { ...S.cover, headline1: e.target.value } }),
+      setH2: (e) => this.setState({ cover: { ...S.cover, headline2: e.target.value } }),
+      setBurst: (e) => this.setState({ cover: { ...S.cover, burst: e.target.value } }),
+      setValidity: (e) => this.setState({ cover: { ...S.cover, validity: e.target.value } }),
+    };
+    const banVals = {
+      title: ban.title, sub: ban.sub,
+      setTitle: (e) => this.setState({ banners: { ...S.banners, [tpl]: { ...ban, title: e.target.value } } }),
+      setSub: (e) => this.setState({ banners: { ...S.banners, [tpl]: { ...ban, sub: e.target.value } } }),
+    };
+
+    const toolDefs = [
+      { k: 'select', g: '↖', n: 'Selection (V)' }, { k: 'type', g: 'T', n: 'Type (T)' },
+      { k: 'image', g: '⊞', n: 'Image frame (F)' }, { k: 'rect', g: '▭', n: 'Rectangle (M)' },
+      { k: 'ellipse', g: '◯', n: 'Ellipse (L)' }, { k: 'hand', g: '✥', n: 'Hand (H)' }, { k: 'zoom', g: '⌕', n: 'Zoom (Z)' },
+    ];
+    const tools = toolDefs.map((t) => ({ ...t, active: t.k === S.tool, bg: t.k === S.tool ? accent : 'transparent', fg: t.k === S.tool ? '#fff' : '#6B645A', onSelect: () => this.setState({ tool: t.k }) }));
+    const canvasCursor = S.tool === 'hand' ? 'grab' : (S.tool === 'zoom' ? 'zoom-in' : (S.tool === 'type' ? 'text' : (S.tool === 'select' ? 'default' : 'crosshair')));
+    const noop = () => {};
+    const pageNav = [{ id: 'sp-cover', label: 'Front Cover', no: 'A', isCover: true, isManual: false, draggable: false, cursor: 'pointer', dragOpacity: '1', onJump: () => this.jumpTo('sp-cover'), onDragStart: noop, onDragEnter: noop, onDelete: noop }]
+      .concat(pages.map((pg, i) => ({ id: 'sp-pg-' + i, label: ban.title, no: String(i + 1), isCover: false, isManual: false, draggable: false, cursor: 'pointer', dragOpacity: '1', onJump: () => this.jumpTo('sp-pg-' + i), onDragStart: noop, onDragEnter: noop, onDelete: noop })))
+      .concat(S.manualPages.map((mp, i) => ({ id: 'sp-mp-' + mp.id, label: mp.title || 'Blank page', no: '+' + (i + 1), isCover: false, isManual: true, draggable: true, cursor: 'grab', dragOpacity: mp.id === S.pageDragId ? '0.45' : '1', onJump: () => this.jumpTo('sp-mp-' + mp.id), onDragStart: () => this.setState({ pageDragId: mp.id }), onDragEnter: () => this.reorderManualPages(mp.id), onDelete: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.removeManualPage(mp.id); } })));
+    const enrichedMain = S.products.map((p, i) => enrichItem(p, i, gtk));
+    const colGuides = Array.from({ length: gtk.cols });
+    const selLabel = inspMode === 'product' ? (selProduct ? (selProduct.name || 'Untitled element') : '') : (inspMode === 'cover' ? 'Cover page' : (inspMode === 'banner' ? 'Section banner' : 'Nothing selected'));
+
+    const pricingTiers = this.PRICING.map((t) => ({
+      name: t.name, price: t.price, per: t.per, tagline: t.tagline, cta: t.cta, highlight: t.highlight, features: t.features,
+      cardBg: t.highlight ? '#211D17' : '#fff', textCol: t.highlight ? '#F6F3ED' : '#211D17',
+      subCol: t.highlight ? 'rgba(246,243,237,.7)' : '#9A9182', featCol: t.highlight ? 'rgba(246,243,237,.92)' : '#3A352D',
+      tickCol: t.highlight ? badge : accent, shadow: t.highlight ? '0 18px 44px rgba(33,29,23,.28)' : '0 1px 3px rgba(33,29,23,.1)',
+      ctaBg: t.highlight ? '#F6F3ED' : accent, ctaFg: t.highlight ? '#211D17' : '#fff',
+      onSelect: () => this.setState({ screen: 'signup' }),
+    }));
+    const projectCards = S.projects.map((p) => ({ id: p.id, name: p.name, store: p.store, deals: p.dealCount + ' deals', updated: p.updated, cover: p.accent, badge: p.badge, h1: p.headline1, h2: p.headline2, onOpen: () => this.openProject(p.id) }));
+
+    return {
+      isUpload: S.screen === 'upload', isProcessing: S.screen === 'processing', isEditor: S.screen === 'editor',
+      isPricing: S.screen === 'pricing', isProjects: S.screen === 'projects',
+      isAuth: S.screen === 'signin' || S.screen === 'signup', authIsSignup: S.screen === 'signup',
+      loggedIn: S.loggedIn, notLoggedIn: !S.loggedIn,
+      authTitle: S.screen === 'signup' ? 'Create your account' : 'Welcome back',
+      authSubtitle: S.screen === 'signup' ? 'Start building flyers in minutes — no card required.' : 'Sign in to your Spread projects.',
+      authCta: S.screen === 'signup' ? 'Create account' : 'Sign in',
+      authSwitchText: S.screen === 'signup' ? 'Already have an account?' : 'New to Spread?',
+      authSwitchCta: S.screen === 'signup' ? 'Sign in' : 'Create one',
+      goHome: () => this.goHome(), goPricing: () => this.goPricing(), goSignin: () => this.goSignin(), goSignup: () => this.goSignup(),
+      toggleAuthMode: () => this.toggleAuthMode(), doAuth: () => this.doAuth(),
+      goProjects: () => this.goProjects(), newProject: () => this.newProject(),
+      pricingTiers, projectCards, projectCountLabel: S.projects.length + (S.projects.length === 1 ? ' catalog' : ' catalogs'),
+      accent, badge, accentName: ac.name, accentSoft: ac.soft,
+      tools, canvasCursor,
+      zoom: S.zoom, zoomCss: S.zoom, zoomPct: Math.round(S.zoom * 100) + '%',
+      zoomIn: () => this.zoomStep(1), zoomOut: () => this.zoomStep(-1),
+      zoomFit: () => this.setState({ zoom: 0.75 }), zoomActual: () => this.setState({ zoom: 1 }),
+      canUndo: S.history.length > 0, canRedo: S.future.length > 0,
+      undoOpacity: S.history.length ? '1' : '0.4', redoOpacity: S.future.length ? '1' : '0.4',
+      undo: () => this.undo(), redo: () => this.redo(),
+      leftTab: S.leftTab, isDealsTab: S.leftTab === 'deals', isPagesTab: S.leftTab === 'pages',
+      dealsTabBg: (S.leftTab === 'deals' ? segOn : segOff).bg, dealsTabFg: (S.leftTab === 'deals' ? segOn : segOff).fg,
+      pagesTabBg: (S.leftTab === 'pages' ? segOn : segOff).bg, pagesTabFg: (S.leftTab === 'pages' ? segOn : segOff).fg,
+      setDealsTab: () => this.setState({ leftTab: 'deals' }), setPagesTab: () => this.setState({ leftTab: 'pages' }),
+      pageNav, manualPagesView, addBlankPage: () => this.addBlankPage(),
+      pageDragOver: (e) => e.preventDefault(), endPageDrag: () => this.setState({ pageDragId: null }),
+      showRulers: S.showRulers, showGuides: S.showGuides, showGrid: S.showGrid,
+      toggleRulers: () => this.setState({ showRulers: !S.showRulers }),
+      toggleGuides: () => this.setState({ showGuides: !S.showGuides }),
+      toggleGrid: () => this.setState({ showGrid: !S.showGrid }),
+      rulersBtnBg: S.showRulers ? accent : '#EFEBE2', rulersBtnFg: S.showRulers ? '#fff' : '#6B645A',
+      guidesBtnBg: S.showGuides ? accent : '#EFEBE2', guidesBtnFg: S.showGuides ? '#fff' : '#6B645A',
+      colGuides, selLabel,
+      unitsLabel: S.pageSize === 'letter' ? 'in' : (S.pageSize === 'square' ? 'px' : 'mm'),
+      sources: ['CSV', 'Excel', 'Shopify', 'Airtable', 'PIM feed'],
+      products: enrichedMain, productCount: S.products.length,
+      pages, totalPages, pageW, pageH,
+      pageSizeLabel: sz.label, orientationLabel: port ? 'Portrait' : 'Landscape', gridLabel: S.gridKey.replace('x', '×'),
+      templates, templateName: (tplDefs.find((t) => t.key === tpl) || {}).name, accents, palettes, grids, sizes,
+      customActive, customAccent: S.customAccent,
+      customRing: customActive ? '0 0 0 2px #FBF9F4, 0 0 0 4px ' + S.customAccent : '0 0 0 1px #E4DFD5',
+      setCustomAccent: (e) => this.setState({ accentKey: 'custom', customAccent: e.target.value }),
+      selectCustom: () => this.setState({ accentKey: 'custom' }),
+      gridCols: gtk.gridCols, cellGap: gtk.cellGap, cellRowH: gtk.cellRowH,
+      saveDim: gtk.saveDim, saveLblF: gtk.saveLblF, savePctF: gtk.savePctF,
+      nameF: gtk.nameF, priceIntF: gtk.priceIntF, priceCentF: gtk.priceCentF,
+      setPortrait: () => this.setState({ orientation: 'portrait' }), setLandscape: () => this.setState({ orientation: 'landscape' }),
+      portBg: (port ? segOn : segOff).bg, portFg: (port ? segOn : segOff).fg, landBg: (land ? segOn : segOff).bg, landFg: (land ? segOn : segOff).fg,
+      dragOver: (e) => e.preventDefault(), endDrag: () => this.setState({ dragId: null }),
+      addDeal: () => this.addDeal(), addBlank: () => this.addBlank(),
+      stopEdit: () => this.stopEdit(),
+      setCatalogName: (e) => this.setState({ catalogName: e.target.value }),
+      coverMark: Math.round(pageW * 0.075), coverMarkF: Math.round(pageW * 0.045), coverBrandF: Math.max(15, Math.round(pageW * 0.045)),
+      coverSmallF: Math.max(8, Math.round(pageW * 0.018)), coverH1: Math.max(34, Math.round(pageW * 0.185)), coverBurstF: Math.max(14, Math.round(pageW * 0.05)),
+      coverRing: (inspMode === 'cover') ? '0 0 0 3px ' + accent + ', 0 10px 38px rgba(33,29,23,.14)' : '0 10px 38px rgba(33,29,23,.14)',
+      bannerRing: (inspMode === 'banner') ? 'inset 0 0 0 3px #fff' : 'none',
+      procCount: S.procCount, procStep: S.procStep, procPct: Math.round(((S.procStep + 1) / 5) * 100) + '%',
+      procText: ['Reading your file…', 'Detecting products & prices…', 'Calculating savings…', 'Paginating pages…', 'Adding finishing touches…'][S.procStep] || 'Reading your file…',
+      procThumbs: Array.from({ length: S.procCount }, (_, i) => ({ id: i, bg: this.stripeBg(), tag: '-' + (15 + i * 3) + '%' })),
+      useSample: () => this.startProcessing(),
+      isInspNone: inspMode === 'none', isInspProduct: inspMode === 'product', isInspCover: inspMode === 'cover', isInspBanner: inspMode === 'banner',
+      deselect: () => { if (S.editingId) return; this.setState({ selected: null }); },
+      selectCover: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.setState({ selected: { type: 'cover' } }); },
+      selectBanner: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.setState({ selected: { type: 'banner' } }); },
+      sel, cov, ban: banVals,
+      exportOpen: S.exportOpen, exportStage: S.exportStage,
+      exportConfig: S.exportStage === 'config', exportGenerating: S.exportStage === 'generating', exportReady: S.exportStage === 'ready',
+      pdfRing: this.ring(S.exportFormat === 'pdf', accent), inddRing: this.ring(S.exportFormat === 'indd', accent),
+      formatLabel: S.exportFormat === 'pdf' ? 'PDF' : 'InDesign',
+      fileName: S.exportFormat === 'pdf' ? 'grand-hyper-weekend-deals.pdf' : 'grand-hyper-weekend-deals.indd',
+      bleedSwBg: S.bleed ? accent : '#D5CEC1', bleedSwX: S.bleed ? '20px' : '2px',
+      toggleBleed: () => this.setState({ bleed: !S.bleed }),
+      openExport: () => this.setState({ exportOpen: true, exportStage: 'config' }), closeExport: () => this.setState({ exportOpen: false }),
+      setPdf: () => this.setState({ exportFormat: 'pdf' }), setIndd: () => this.setState({ exportFormat: 'indd' }),
+      generate: () => this.generateExport(), stop: (e) => e.stopPropagation(),
+      catalogName: S.catalogName,
+    };
+  }
+}
+</script>
+</body>
+</html>
