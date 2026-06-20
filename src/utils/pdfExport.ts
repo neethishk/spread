@@ -1,7 +1,7 @@
 import html2canvas from 'html2canvas'
 import { jsPDF } from 'jspdf'
 
-// OKLCH → linear-sRGB → gamma-sRGB conversion so html2canvas can parse colors
+// OKLCH → linear-sRGB → gamma-sRGB
 function oklchToRgb(L: number, C: number, H: number): [number, number, number] {
   const hRad = (H * Math.PI) / 180
   const a = C * Math.cos(hRad), b = C * Math.sin(hRad)
@@ -21,24 +21,22 @@ function oklchToRgb(L: number, C: number, H: number): [number, number, number] {
 }
 
 function replaceOklch(css: string): string {
-  return css.replace(/oklch\(\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*[\d.]+)?\s*\)/g, (_, L, C, H) => {
+  return css.replace(/oklch\(\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+))?\s*\)/g, (_, L, C, H, A) => {
     const [r, g, b] = oklchToRgb(Number(L), Number(C), Number(H))
-    return `rgb(${r},${g},${b})`
+    return A !== undefined ? `rgba(${r},${g},${b},${A})` : `rgb(${r},${g},${b})`
   })
 }
 
-type StylePatch = { el: HTMLElement; original: string }
-
-function patchTree(root: HTMLElement): StylePatch[] {
-  const patches: StylePatch[] = []
+// Patch all inline styles in a cloned subtree (no need to restore — it's a clone)
+function patchInlineStyles(root: HTMLElement) {
   const all = [root, ...Array.from(root.querySelectorAll<HTMLElement>('*'))]
   for (const el of all) {
     const css = el.style.cssText
     if (!css.includes('oklch') && !css.includes('color-mix')) continue
-    patches.push({ el, original: css })
-    el.style.cssText = replaceOklch(css)
-    // Resolve any remaining color-mix() via computed styles
-    if (el.style.cssText.includes('color-mix')) {
+    let next = replaceOklch(css)
+    el.style.cssText = next
+    // Resolve any leftover color-mix() using the cloned element's computed style
+    if (next.includes('color-mix')) {
       const cs = window.getComputedStyle(el)
       for (let i = 0; i < el.style.length; i++) {
         const prop = el.style.item(i)
@@ -47,25 +45,38 @@ function patchTree(root: HTMLElement): StylePatch[] {
       }
     }
   }
-  return patches
 }
 
-function restoreTree(patches: StylePatch[]) {
-  for (const { el, original } of patches) el.style.cssText = original
+// Patch all CSSRule text in a cloned document's stylesheets
+function patchStyleSheets(doc: Document) {
+  for (const sheet of Array.from(doc.styleSheets)) {
+    let rules: CSSRuleList
+    try { rules = sheet.cssRules } catch { continue } // skip cross-origin
+    for (let i = rules.length - 1; i >= 0; i--) {
+      const rule = rules[i]
+      if (!rule.cssText.includes('oklch') && !rule.cssText.includes('color-mix')) continue
+      try {
+        sheet.deleteRule(i)
+        sheet.insertRule(replaceOklch(rule.cssText), i)
+      } catch { /* ignore unparseable rules */ }
+    }
+  }
 }
 
 async function captureElement(el: HTMLElement): Promise<HTMLCanvasElement> {
   const prevZoom = el.style.zoom
   el.style.zoom = '1'
-  const patches = patchTree(el)
   const canvas = await html2canvas(el, {
     scale: 2,
     useCORS: true,
     allowTaint: false,
     logging: false,
     backgroundColor: '#ffffff',
+    onclone: (clonedDoc: Document, clonedEl: HTMLElement) => {
+      patchStyleSheets(clonedDoc)
+      patchInlineStyles(clonedEl)
+    },
   })
-  restoreTree(patches)
   el.style.zoom = prevZoom
   return canvas
 }
@@ -75,7 +86,6 @@ function addCropMarks(pdf: jsPDF, w: number, h: number, _bleedMm: number) {
   const gap = 5
   pdf.setDrawColor(0)
   pdf.setLineWidth(0.25)
-
   const corners = [
     { x: 0, y: 0 }, { x: w, y: 0 }, { x: w, y: h }, { x: 0, y: h },
   ]
@@ -91,25 +101,18 @@ export async function exportPDF(bleed: boolean, onProgress?: (pct: number) => vo
   const coverEl = document.getElementById('sp-cover')
   if (!coverEl) throw new Error('No catalog pages found – open the editor first.')
 
-  // Collect all pages in order
   const allEls: HTMLElement[] = [coverEl]
   let pi = 0
   while (document.getElementById(`sp-pg-${pi}`)) {
     allEls.push(document.getElementById(`sp-pg-${pi}`)!)
     pi++
   }
-  // Manual pages via data attribute – collect all sp-mp-* divs in order
   const mpEls = Array.from(document.querySelectorAll('[id^="sp-mp-"]')) as HTMLElement[]
   allEls.push(...mpEls)
 
   const first = allEls[0]
-  // Get the natural (pre-zoom) size
-  const rawW = first.getBoundingClientRect().width
-  const rawH = first.getBoundingClientRect().height
-
-  // Scale to 72 dpi equivalent (jsPDF px units)
-  const pxW = rawW
-  const pxH = rawH
+  const pxW = first.getBoundingClientRect().width
+  const pxH = first.getBoundingClientRect().height
 
   const pdf = new jsPDF({
     orientation: pxW > pxH ? 'landscape' : 'portrait',
