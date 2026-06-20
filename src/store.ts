@@ -7,7 +7,7 @@ import { computeAccent } from './pages/editor/helpers'
 import type {
   Screen, Template, GridKey, PageSize, Orientation,
   Product, ManualPage, Cover, BannerDef, Project, Selection,
-  HistorySnap, ExportFormat, ExportStage
+  HistorySnap, ExportFormat, ExportStage, FreeElement
 } from './types'
 import type { User } from '@supabase/supabase-js'
 
@@ -48,6 +48,9 @@ interface AppState {
   future: HistorySnap[]
   catalogName: string
   _timers: ReturnType<typeof setTimeout>[]
+  pageElements: Record<string, FreeElement[]>
+  selectedFreeIds: string[]
+  freeElPageKey: string | null
 
   // actions
   initAuth: () => void
@@ -89,6 +92,11 @@ interface AppState {
   zoomStep: (dir: 1 | -1) => void
   findAnyProduct: (id: string) => Product | undefined
   generateExport: () => Promise<void>
+  addFreeEl: (pageKey: string, el: FreeElement) => void
+  updateFreeEl: (pageKey: string, id: string, patch: Partial<FreeElement>) => void
+  deleteFreeEls: (pageKey: string, ids: string[]) => void
+  groupFreeEls: (pageKey: string, ids: string[]) => void
+  ungroupFreeEls: (pageKey: string, groupId: string) => void
   set: (patch: Partial<AppState>) => void
 }
 
@@ -129,6 +137,9 @@ export const useStore = create<AppState>((set, get) => ({
   future: [],
   catalogName: 'Grand Hyper — Weekend Deals',
   _timers: [],
+  pageElements: {},
+  selectedFreeIds: [],
+  freeElPageKey: null,
 
   set: (patch) => set(patch),
 
@@ -501,6 +512,53 @@ export const useStore = create<AppState>((set, get) => ({
       template: 'promo',
       gridKey: products.length > 18 ? '4x4' : products.length > 9 ? '3x3' : '2x2',
     })
+  },
+
+  addFreeEl: (pageKey, el) => {
+    set((s) => ({
+      pageElements: { ...s.pageElements, [pageKey]: [...(s.pageElements[pageKey] ?? []), el] },
+      selectedFreeIds: [el.id],
+      freeElPageKey: pageKey,
+    }))
+  },
+
+  updateFreeEl: (pageKey, id, patch) => {
+    set((s) => ({
+      pageElements: {
+        ...s.pageElements,
+        [pageKey]: (s.pageElements[pageKey] ?? []).map((e) => e.id === id ? { ...e, ...patch } : e),
+      },
+    }))
+  },
+
+  deleteFreeEls: (pageKey, ids) => {
+    set((s) => ({
+      pageElements: {
+        ...s.pageElements,
+        [pageKey]: (s.pageElements[pageKey] ?? []).filter((e) => !ids.includes(e.id)),
+      },
+      selectedFreeIds: [],
+      freeElPageKey: null,
+    }))
+  },
+
+  groupFreeEls: (pageKey, ids) => {
+    const groupId = 'g' + Date.now()
+    set((s) => ({
+      pageElements: {
+        ...s.pageElements,
+        [pageKey]: (s.pageElements[pageKey] ?? []).map((e) => ids.includes(e.id) ? { ...e, groupId } : e),
+      },
+    }))
+  },
+
+  ungroupFreeEls: (pageKey, groupId) => {
+    set((s) => ({
+      pageElements: {
+        ...s.pageElements,
+        [pageKey]: (s.pageElements[pageKey] ?? []).map((e) => e.groupId === groupId ? { ...e, groupId: null } : e),
+      },
+    }))
   },
 
   generateExport: async () => {

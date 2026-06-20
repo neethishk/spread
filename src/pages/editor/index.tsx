@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useStore } from '../../store'
 import { useShallow } from 'zustand/react/shallow'
 import { computeAccent, computePageDimensions, gridTokens } from './helpers'
@@ -13,6 +14,7 @@ export default function Editor() {
     products, manualPages, pageSize, orientation, gridKey, template,
     accentKey, customAccent, selected, history, future,
     set, zoomStep, undo, redo, goProjects,
+    selectedFreeIds, freeElPageKey, deleteFreeEls,
   } = useStore(useShallow((s) => ({
     tool: s.tool, zoom: s.zoom, showRulers: s.showRulers, showGuides: s.showGuides,
     catalogName: s.catalogName, products: s.products, manualPages: s.manualPages,
@@ -20,6 +22,7 @@ export default function Editor() {
     gridKey: s.gridKey, template: s.template, accentKey: s.accentKey,
     customAccent: s.customAccent, selected: s.selected, history: s.history, future: s.future,
     set: s.set, zoomStep: s.zoomStep, undo: s.undo, redo: s.redo, goProjects: s.goProjects,
+    selectedFreeIds: s.selectedFreeIds, freeElPageKey: s.freeElPageKey, deleteFreeEls: s.deleteFreeEls,
   })))
 
   const ac = computeAccent(accentKey, customAccent)
@@ -52,6 +55,26 @@ export default function Editor() {
 
   const fitZoom = () => set({ zoom: 0.75 })
   const resetZoom = () => set({ zoom: 1 })
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'z' && !e.shiftKey) { undo(); return }
+        if ((e.key === 'z' && e.shiftKey) || e.key === 'y') { redo(); return }
+        return
+      }
+      const toolMap: Record<string, string> = { v: 'select', t: 'type', f: 'image', m: 'rect', l: 'ellipse', h: 'hand', z: 'zoom' }
+      if (toolMap[e.key.toLowerCase()]) { set({ tool: toolMap[e.key.toLowerCase()] }); return }
+      if ((e.key === 'Delete' || e.key === 'Backspace') && freeElPageKey && selectedFreeIds.length > 0) {
+        e.preventDefault()
+        deleteFreeEls(freeElPageKey, selectedFreeIds)
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [selectedFreeIds, freeElPageKey, undo, redo, set, deleteFreeEls])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', fontFamily: "'Hanken Grotesk', sans-serif", background: '#FBF9F4' }}>

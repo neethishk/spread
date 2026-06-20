@@ -1,3 +1,26 @@
+export interface FreeElement {
+  id: string
+  type: 'text' | 'image' | 'rect' | 'ellipse'
+  x: number       // % of page width
+  y: number       // % of page height
+  w: number       // % of page width
+  h: number       // % of page height
+  fill: string
+  stroke: string
+  strokeW: number
+  opacity: number
+  text: string
+  fontSize: number
+  bold: boolean
+  italic: boolean
+  fontColor: string
+  textAlign: 'left' | 'center' | 'right'
+  imageUrl: string
+  fit: 'cover' | 'contain' | 'fill'
+  zIndex: number
+  groupId: string | null
+}
+
 export type Screen = 'upload' | 'pricing' | 'signin' | 'signup' | 'projects' | 'processing' | 'editor' | 'csvUpload'
 export type Template = 'promo' | 'mega' | 'clean' | 'bomb' | 'spec' | 'custom'
 export type GridKey = '2x2' | '2x3' | '3x3' | '3x4' | '4x4'

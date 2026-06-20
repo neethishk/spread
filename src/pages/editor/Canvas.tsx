@@ -3,6 +3,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { computeAccent, computePageDimensions, gridTokens, enrichItem } from './helpers'
 import type { GridKey } from '../../types'
 import { GRIDS } from '../../constants'
+import FreeLayer from './FreeLayer'
 
 export default function Canvas() {
   const {
@@ -11,6 +12,7 @@ export default function Canvas() {
     cover, banners, badge, accentKey, customAccent,
     selected, editingId, dragId,
     set, stopEdit, liveProduct, startEdit, setPageGrid, setManualGrid, addDealToPage, reorder,
+    tool,
   } = useStore(useShallow((s) => ({
     showRulers: s.showRulers, showGuides: s.showGuides, zoom: s.zoom,
     pageSize: s.pageSize, orientation: s.orientation, template: s.template,
@@ -18,6 +20,7 @@ export default function Canvas() {
     cover: s.cover, banners: s.banners, badge: s.badge,
     accentKey: s.accentKey, customAccent: s.customAccent,
     selected: s.selected, editingId: s.editingId, dragId: s.dragId,
+    tool: s.tool,
     set: s.set, stopEdit: s.stopEdit, liveProduct: s.liveProduct,
     startEdit: s.startEdit, setPageGrid: s.setPageGrid, setManualGrid: s.setManualGrid,
     addDealToPage: s.addDealToPage, reorder: s.reorder,
@@ -61,12 +64,10 @@ export default function Canvas() {
 
   const deselect = (e: React.MouseEvent) => {
     if (editingId) return
-    if (e.target === e.currentTarget) set({ selected: null })
+    if (e.target === e.currentTarget) set({ selected: null, selectedFreeIds: [] })
   }
 
-  const canvasCursor = {
-    hand: 'grab', zoom: 'zoom-in', type: 'text', select: 'default',
-  }['select'] ?? 'crosshair'
+  const canvasCursor = ({ hand: 'grab', zoom: 'zoom-in', type: 'crosshair', rect: 'crosshair', ellipse: 'crosshair', image: 'crosshair', select: 'default' } as Record<string, string>)[tool] ?? 'default'
 
   const unitsLabel = pageSize === 'letter' ? 'in' : (pageSize === 'square' ? 'px' : 'mm')
   const colGuides = Array.from({ length: gtk.cols })
@@ -101,8 +102,8 @@ export default function Canvas() {
             {/* COVER PAGE */}
             <div
               id="sp-cover"
-              onClick={(e) => { e.stopPropagation(); set({ selected: { type: 'cover' } }) }}
-              style={{ width: pageW, height: pageH, background: '#fff', borderRadius: 4, boxShadow: coverRing, overflow: 'hidden', marginBottom: 26, cursor: 'pointer', display: 'flex', flexDirection: 'column' }}
+              onClick={(e) => { e.stopPropagation(); set({ selected: { type: 'cover' }, selectedFreeIds: [] }) }}
+              style={{ position: 'relative', width: pageW, height: pageH, background: '#fff', borderRadius: 4, boxShadow: coverRing, overflow: 'hidden', marginBottom: 26, cursor: 'pointer', display: 'flex', flexDirection: 'column' }}
             >
               <div style={{ flex: 1, background: accent, color: '#fff', padding: '7% 8% 8%', position: 'relative', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6%' }}>
@@ -123,6 +124,7 @@ export default function Canvas() {
               <div style={{ padding: '3% 8%', display: 'flex', justifyContent: 'space-between', fontFamily: "'Space Mono', monospace", fontSize: coverSmallF, color: '#9A9182', letterSpacing: '0.5px' }}>
                 <span>{products.length} DEALS</span><span>{totalPages} PAGES</span><span>MADE WITH SPREAD</span>
               </div>
+              <FreeLayer pageKey="cover" pageW={pageW} pageH={pageH} accent={accent} />
             </div>
 
             {/* CONTENT PAGES */}
@@ -139,7 +141,7 @@ export default function Canvas() {
                 )}
                 {/* Banner */}
                 <div
-                  onClick={(e) => { e.stopPropagation(); set({ selected: { type: 'banner' } }) }}
+                  onClick={(e) => { e.stopPropagation(); set({ selected: { type: 'banner' }, selectedFreeIds: [] }) }}
                   style={{ flex: 'none', background: accent, color: '#fff', padding: '9px 12px 9px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', boxShadow: bannerRing }}
                 >
                   <span style={{ fontFamily: "'Anton', sans-serif", fontSize: 22, transform: 'skewX(-7deg)', display: 'inline-block' }}>{ban.title}</span>
@@ -155,7 +157,7 @@ export default function Canvas() {
                   {pg.items.map((item) => (
                     <ProductCell
                       key={item.id} item={item} accent={accent} badge={badge}
-                      onSelect={(e) => { e.stopPropagation(); set({ selected: { type: 'product', id: item.id } }) }}
+                      onSelect={(e) => { e.stopPropagation(); set({ selected: { type: 'product', id: item.id }, selectedFreeIds: [] }) }}
                       onDblName={(e) => { e.stopPropagation(); startEdit(item.id, 'name') }}
                       onDblDesc={(e) => { e.stopPropagation(); startEdit(item.id, 'desc') }}
                       onDragStart={() => set({ dragId: item.id })}
@@ -171,6 +173,7 @@ export default function Canvas() {
                 <div style={{ flex: 'none', padding: '7px 22px', display: 'flex', justifyContent: 'space-between', fontFamily: "'Space Mono', monospace", fontSize: 9.5, color: '#B7AE9E', letterSpacing: '0.5px', borderTop: '1px solid #F0ECE3' }}>
                   <span>{cover.brand} · WHILE STOCKS LAST</span><span>{sizeLabel} · PAGE {pgI + 2}</span>
                 </div>
+                <FreeLayer pageKey={`pg-${pgI}`} pageW={pageW} pageH={pageH} accent={accent} />
               </div>
             ))}
 
@@ -204,7 +207,7 @@ export default function Canvas() {
                       {items.map((item) => (
                         <ProductCell
                           key={item.id} item={item} accent={accent} badge={badge}
-                          onSelect={(e) => { e.stopPropagation(); set({ selected: { type: 'product', id: item.id } }) }}
+                          onSelect={(e) => { e.stopPropagation(); set({ selected: { type: 'product', id: item.id }, selectedFreeIds: [] }) }}
                           onDblName={(e) => { e.stopPropagation(); startEdit(item.id, 'name') }}
                           onDblDesc={(e) => { e.stopPropagation(); startEdit(item.id, 'desc') }}
                           onDragStart={() => set({ dragId: item.id })}
@@ -224,6 +227,7 @@ export default function Canvas() {
                   <div style={{ flex: 'none', padding: '7px 22px', display: 'flex', justifyContent: 'space-between', fontFamily: "'Space Mono', monospace", fontSize: 9.5, color: '#B7AE9E', letterSpacing: '0.5px', borderTop: '1px solid #F0ECE3' }}>
                     <span>{cover.brand} · CUSTOM PAGE</span><span>{sizeLabel}</span>
                   </div>
+                  <FreeLayer pageKey={`mp-${mp.id}`} pageW={pageW} pageH={pageH} accent={accent} />
                 </div>
               )
             })}

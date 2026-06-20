@@ -2,20 +2,25 @@ import { useStore } from '../../store'
 import { useShallow } from 'zustand/react/shallow'
 import { computeAccent, computePageDimensions, gridTokens, ring, swX } from './helpers'
 import { ACCENTS, PALETTES, TPL_DEFS, GRIDS, SIZES, TAGCOL } from '../../constants'
-import type { GridKey } from '../../types'
+import type { GridKey, FreeElement } from '../../types'
 
 export default function RightPanel() {
   const {
     selected, template, gridKey, pageSize, orientation,
     accentKey, customAccent, badge, products, manualPages, banners, cover,
+    pageElements, selectedFreeIds, freeElPageKey,
     set, updateProduct, updateOv, duplicateProduct, removeProduct, moveProduct,
+    updateFreeEl, deleteFreeEls, groupFreeEls, ungroupFreeEls,
   } = useStore(useShallow((s) => ({
     selected: s.selected, template: s.template, gridKey: s.gridKey,
     pageSize: s.pageSize, orientation: s.orientation,
     accentKey: s.accentKey, customAccent: s.customAccent, badge: s.badge,
     products: s.products, manualPages: s.manualPages, banners: s.banners, cover: s.cover,
+    pageElements: s.pageElements, selectedFreeIds: s.selectedFreeIds, freeElPageKey: s.freeElPageKey,
     set: s.set, updateProduct: s.updateProduct, updateOv: s.updateOv,
     duplicateProduct: s.duplicateProduct, removeProduct: s.removeProduct, moveProduct: s.moveProduct,
+    updateFreeEl: s.updateFreeEl, deleteFreeEls: s.deleteFreeEls,
+    groupFreeEls: s.groupFreeEls, ungroupFreeEls: s.ungroupFreeEls,
   })))
 
   const ac = computeAccent(accentKey, customAccent)
@@ -35,7 +40,11 @@ export default function RightPanel() {
     }
   }
 
-  const inspMode = !selected ? 'none' : (selProduct ? 'product' : selected.type)
+  const selectedFreeEl: FreeElement | null = selectedFreeIds.length > 0 && freeElPageKey
+    ? (pageElements[freeElPageKey] ?? []).find((e) => e.id === selectedFreeIds[0]) ?? null
+    : null
+
+  const inspMode = selectedFreeEl ? 'freeEl' : !selected ? 'none' : (selProduct ? 'product' : selected.type)
   const ban = banners[template] ?? { title: '', sub: '' }
   const segOn = { bg: '#fff', fg: '#211D17' }
   const segOff = { bg: 'transparent', fg: '#9A9182' }
@@ -438,6 +447,131 @@ export default function RightPanel() {
           </div>
         </>
       )}
+
+      {/* ===== FREE ELEMENT INSPECTOR ===== */}
+      {inspMode === 'freeEl' && selectedFreeEl && freeElPageKey && (() => {
+        const fe = selectedFreeEl
+        const pgKey = freeElPageKey
+        const upd = (patch: Partial<FreeElement>) => updateFreeEl(pgKey, fe.id, patch)
+        return (
+          <>
+            <div style={{ position: 'sticky', top: 0, background: '#FBF9F4', zIndex: 2, padding: '18px 22px 14px', borderBottom: '1px solid #EAE6DD', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <button onClick={() => set({ selectedFreeIds: [], freeElPageKey: null })} style={{ border: 'none', background: '#F0ECE3', cursor: 'pointer', width: 30, height: 30, borderRadius: 8, fontSize: 15, color: '#211D17' }}>←</button>
+              <div style={{ lineHeight: 1.1 }}>
+                <div style={{ fontWeight: 800, fontSize: 15 }}>Edit element</div>
+                <div style={{ fontSize: 11.5, color: '#9A9182', fontFamily: "'Space Mono', monospace", textTransform: 'uppercase' }}>{fe.type}</div>
+              </div>
+            </div>
+            <div style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+              {/* Position & Size */}
+              <div>
+                <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: '1.5px', color: '#9A9182', marginBottom: 10 }}>POSITION & SIZE</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  {(['x', 'y', 'w', 'h'] as const).map((field) => (
+                    <div key={field}>
+                      <label style={{ fontSize: 10.5, fontWeight: 700, color: '#9A9182', display: 'block', marginBottom: 3, textTransform: 'uppercase' }}>{field} %</label>
+                      <input type="number" className="sp-in" min={0} max={100} step={0.5}
+                        value={Math.round((fe[field] as number) * 10) / 10}
+                        onChange={(e) => upd({ [field]: parseFloat(e.target.value) || 0 })}
+                        style={{ padding: '7px 9px', fontSize: 12 }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Fill & Stroke */}
+              {(fe.type === 'rect' || fe.type === 'ellipse') && (
+                <div>
+                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: '1.5px', color: '#9A9182', marginBottom: 10 }}>FILL & STROKE</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: '#6B645A', flex: 1 }}>Fill</label>
+                    <label style={{ position: 'relative', width: 34, height: 34, flex: 'none', borderRadius: 9, overflow: 'hidden', cursor: 'pointer', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.1)' }}>
+                      <span style={{ position: 'absolute', inset: 0, background: fe.fill === 'transparent' ? '#fff' : fe.fill }} />
+                      <input type="color" value={fe.fill === 'transparent' ? '#ffffff' : fe.fill} onChange={(e) => upd({ fill: e.target.value })} style={{ position: 'absolute', top: -6, left: -6, width: 48, height: 48, border: 'none', padding: 0, cursor: 'pointer', opacity: 0 }} />
+                    </label>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: '#6B645A', flex: 1 }}>Stroke</label>
+                    <label style={{ position: 'relative', width: 34, height: 34, flex: 'none', borderRadius: 9, overflow: 'hidden', cursor: 'pointer', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.1)' }}>
+                      <span style={{ position: 'absolute', inset: 0, background: fe.stroke === 'none' ? '#fff' : fe.stroke }} />
+                      <input type="color" value={fe.stroke === 'none' ? '#211D17' : fe.stroke} onChange={(e) => upd({ stroke: e.target.value })} style={{ position: 'absolute', top: -6, left: -6, width: 48, height: 48, border: 'none', padding: 0, cursor: 'pointer', opacity: 0 }} />
+                    </label>
+                    <input type="number" min={0} max={12} value={fe.strokeW} onChange={(e) => upd({ strokeW: parseInt(e.target.value) || 0 })} style={{ width: 52, padding: '7px 9px', border: '1px solid #E2DCD0', borderRadius: 9, fontFamily: 'inherit', fontSize: 12, color: '#211D17', outline: 'none' }} />
+                  </div>
+                </div>
+              )}
+
+              {/* Image */}
+              {fe.type === 'image' && (
+                <div>
+                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: '1.5px', color: '#9A9182', marginBottom: 10 }}>IMAGE</div>
+                  <label style={{ fontSize: 11.5, fontWeight: 700, color: '#6B645A', display: 'block', marginBottom: 6 }}>Image URL</label>
+                  <input className="sp-in" placeholder="https://..." value={fe.imageUrl} onChange={(e) => upd({ imageUrl: e.target.value })} />
+                  <div style={{ marginTop: 10 }}>
+                    <label style={{ fontSize: 11.5, fontWeight: 700, color: '#6B645A', display: 'block', marginBottom: 6 }}>Fit</label>
+                    <div style={{ display: 'flex', background: '#F0ECE3', borderRadius: 9, padding: 3 }}>
+                      {(['cover', 'contain', 'fill'] as const).map((f) => (
+                        <button key={f} onClick={() => upd({ fit: f })} style={{ flex: 1, border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 11.5, fontWeight: 600, padding: 7, borderRadius: 7, ...seg(fe.fit === f) }}>{f[0].toUpperCase() + f.slice(1)}</button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Text */}
+              {fe.type === 'text' && (
+                <div>
+                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: '1.5px', color: '#9A9182', marginBottom: 10 }}>TEXT</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: '#6B645A', flex: 1 }}>Size</label>
+                    <input type="number" min={6} max={200} value={fe.fontSize} onChange={(e) => upd({ fontSize: parseInt(e.target.value) || 16 })} style={{ width: 64, padding: '7px 9px', border: '1px solid #E2DCD0', borderRadius: 9, fontFamily: 'inherit', fontSize: 12, color: '#211D17', outline: 'none' }} />
+                  </div>
+                  <div style={{ display: 'flex', background: '#F0ECE3', borderRadius: 9, padding: 3, marginBottom: 10 }}>
+                    {(['left', 'center', 'right'] as const).map((a) => (
+                      <button key={a} onClick={() => upd({ textAlign: a })} style={{ flex: 1, border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: 600, padding: 7, borderRadius: 7, ...seg(fe.textAlign === a) }}>{a[0].toUpperCase() + a.slice(1)}</button>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button onClick={() => upd({ bold: !fe.bold })} style={{ flex: 1, border: '1px solid #E0DACE', background: fe.bold ? '#211D17' : '#fff', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 700, padding: 8, borderRadius: 9, color: fe.bold ? '#fff' : '#211D17' }}>B</button>
+                    <button onClick={() => upd({ italic: !fe.italic })} style={{ flex: 1, border: '1px solid #E0DACE', background: fe.italic ? '#211D17' : '#fff', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 400, fontStyle: 'italic', padding: 8, borderRadius: 9, color: fe.italic ? '#fff' : '#211D17' }}>I</button>
+                    <label style={{ flex: 1, position: 'relative', borderRadius: 9, overflow: 'hidden', cursor: 'pointer', border: '1px solid #E0DACE', display: 'flex', alignItems: 'center', justifyContent: 'center', background: fe.fontColor, minHeight: 36 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: '#fff', mixBlendMode: 'difference', pointerEvents: 'none' }}>A</span>
+                      <input type="color" value={fe.fontColor} onChange={(e) => upd({ fontColor: e.target.value })} style={{ position: 'absolute', top: -6, left: -6, width: 50, height: 50, border: 'none', padding: 0, cursor: 'pointer', opacity: 0 }} />
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* Opacity */}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <label style={{ fontSize: 11.5, fontWeight: 700, color: '#6B645A' }}>Opacity</label>
+                  <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: '#9A9182' }}>{Math.round(fe.opacity * 100)}%</span>
+                </div>
+                <input type="range" min="5" max="100" value={Math.round(fe.opacity * 100)} onChange={(e) => upd({ opacity: parseInt(e.target.value) / 100 })} style={{ width: '100%', accentColor: accent }} />
+              </div>
+
+              {/* Group / Ungroup */}
+              {selectedFreeIds.length > 1 && (
+                <button onClick={() => groupFreeEls(pgKey, selectedFreeIds)} style={{ border: 'none', background: accent, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 700, padding: 11, borderRadius: 10, color: '#fff' }}>
+                  Group {selectedFreeIds.length} elements
+                </button>
+              )}
+              {fe.groupId && (
+                <button onClick={() => ungroupFreeEls(pgKey, fe.groupId!)} style={{ border: '1px solid #E0DACE', background: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, padding: 11, borderRadius: 10 }}>
+                  Ungroup
+                </button>
+              )}
+
+              <button onClick={() => deleteFreeEls(pgKey, selectedFreeIds)} style={{ border: '1px solid #FECACA', background: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, padding: 11, borderRadius: 10, color: '#DC2626' }}>
+                Delete element{selectedFreeIds.length > 1 ? 's' : ''}
+              </button>
+            </div>
+          </>
+        )
+      })()}
 
       {/* ===== BANNER INSPECTOR ===== */}
       {inspMode === 'banner' && (
