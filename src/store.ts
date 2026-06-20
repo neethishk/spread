@@ -508,7 +508,7 @@ export const useStore = create<AppState>((set, get) => ({
     set({ exportStage: 'generating' })
     try {
       if (s.exportFormat === 'pdf') {
-        await exportPDF(s.bleed, (pct) => {
+        await exportPDF(s.bleed, s.pageSize, s.orientation, (pct) => {
           if (pct === 100) set({ exportStage: 'ready' })
         })
         set({ exportStage: 'ready' })

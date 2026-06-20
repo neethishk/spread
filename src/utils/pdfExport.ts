@@ -1,7 +1,24 @@
 import html2canvas from 'html2canvas'
 import { jsPDF } from 'jspdf'
+import type { PageSize, Orientation } from '../types'
 
-// OKLCH → linear-sRGB → gamma-sRGB
+// Physical page sizes in mm (trim size, no bleed)
+const PAGE_SIZES_MM: Record<PageSize, { w: number; h: number }> = {
+  a4:     { w: 210,   h: 297   },
+  a5:     { w: 148,   h: 210   },
+  a3:     { w: 297,   h: 420   },
+  letter: { w: 215.9, h: 279.4 },
+  square: { w: 210,   h: 210   },
+}
+
+const PRINT_DPI   = 300
+const MM_PER_INCH = 25.4
+const BLEED_MM    = 3
+const MARK_GAP_MM = 2   // space between trim edge and crop mark
+const MARK_LEN_MM = 6   // length of crop mark line
+
+// ── OKLCH → sRGB ───────────────────────────────────────────────────────────
+
 function oklchToRgb(L: number, C: number, H: number): [number, number, number] {
   const hRad = (H * Math.PI) / 180
   const a = C * Math.cos(hRad), b = C * Math.sin(hRad)
@@ -27,7 +44,6 @@ function replaceOklch(css: string): string {
   })
 }
 
-// Patch all inline styles in a cloned subtree (no need to restore — it's a clone)
 function patchInlineStyles(root: HTMLElement) {
   const all = [root, ...Array.from(root.querySelectorAll<HTMLElement>('*'))]
   for (const el of all) {
@@ -35,7 +51,6 @@ function patchInlineStyles(root: HTMLElement) {
     if (!css.includes('oklch') && !css.includes('color-mix')) continue
     let next = replaceOklch(css)
     el.style.cssText = next
-    // Resolve any leftover color-mix() using the cloned element's computed style
     if (next.includes('color-mix')) {
       const cs = window.getComputedStyle(el)
       for (let i = 0; i < el.style.length; i++) {
@@ -47,27 +62,28 @@ function patchInlineStyles(root: HTMLElement) {
   }
 }
 
-// Patch all CSSRule text in a cloned document's stylesheets
 function patchStyleSheets(doc: Document) {
   for (const sheet of Array.from(doc.styleSheets)) {
     let rules: CSSRuleList
-    try { rules = sheet.cssRules } catch { continue } // skip cross-origin
+    try { rules = sheet.cssRules } catch { continue }
     for (let i = rules.length - 1; i >= 0; i--) {
       const rule = rules[i]
       if (!rule.cssText.includes('oklch') && !rule.cssText.includes('color-mix')) continue
       try {
         sheet.deleteRule(i)
         sheet.insertRule(replaceOklch(rule.cssText), i)
-      } catch { /* ignore unparseable rules */ }
+      } catch { /* skip unparseable rules */ }
     }
   }
 }
 
-async function captureElement(el: HTMLElement): Promise<HTMLCanvasElement> {
+// ── Capture ─────────────────────────────────────────────────────────────────
+
+async function captureElement(el: HTMLElement, scale: number): Promise<HTMLCanvasElement> {
   const prevZoom = el.style.zoom
   el.style.zoom = '1'
   const canvas = await html2canvas(el, {
-    scale: 2,
+    scale,
     useCORS: true,
     allowTaint: false,
     logging: false,
@@ -81,23 +97,38 @@ async function captureElement(el: HTMLElement): Promise<HTMLCanvasElement> {
   return canvas
 }
 
-function addCropMarks(pdf: jsPDF, w: number, h: number, _bleedMm: number) {
-  const tick = 20
-  const gap = 5
-  pdf.setDrawColor(0)
+// ── Crop marks (mm coords) ───────────────────────────────────────────────────
+
+function addCropMarksMm(pdf: jsPDF, trimW: number, trimH: number, bMm: number) {
+  pdf.setDrawColor(0, 0, 0)
   pdf.setLineWidth(0.25)
+
+  // Trim-box corners in the PDF coordinate space
   const corners = [
-    { x: 0, y: 0 }, { x: w, y: 0 }, { x: w, y: h }, { x: 0, y: h },
+    { x: bMm,         y: bMm         },
+    { x: bMm + trimW, y: bMm         },
+    { x: bMm + trimW, y: bMm + trimH },
+    { x: bMm,         y: bMm + trimH },
   ]
+
   for (const { x, y } of corners) {
-    const sx = x === 0 ? -1 : 1
-    const sy = y === 0 ? -1 : 1
-    pdf.line(x + sx * gap, y, x + sx * (gap + tick), y)
-    pdf.line(x, y + sy * gap, x, y + sy * (gap + tick))
+    const sx = x === bMm ? -1 : 1
+    const sy = y === bMm ? -1 : 1
+    // horizontal mark
+    pdf.line(x + sx * MARK_GAP_MM, y, x + sx * (MARK_GAP_MM + MARK_LEN_MM), y)
+    // vertical mark
+    pdf.line(x, y + sy * MARK_GAP_MM, x, y + sy * (MARK_GAP_MM + MARK_LEN_MM))
   }
 }
 
-export async function exportPDF(bleed: boolean, onProgress?: (pct: number) => void): Promise<void> {
+// ── Main export ──────────────────────────────────────────────────────────────
+
+export async function exportPDF(
+  bleed: boolean,
+  pageSize: PageSize,
+  orientation: Orientation,
+  onProgress?: (pct: number) => void,
+): Promise<void> {
   const coverEl = document.getElementById('sp-cover')
   if (!coverEl) throw new Error('No catalog pages found – open the editor first.')
 
@@ -110,24 +141,44 @@ export async function exportPDF(bleed: boolean, onProgress?: (pct: number) => vo
   const mpEls = Array.from(document.querySelectorAll('[id^="sp-mp-"]')) as HTMLElement[]
   allEls.push(...mpEls)
 
-  const first = allEls[0]
-  const pxW = first.getBoundingClientRect().width
-  const pxH = first.getBoundingClientRect().height
+  // Physical trim size in mm
+  const sizes = PAGE_SIZES_MM[pageSize] ?? PAGE_SIZES_MM.a4
+  const trimW = orientation === 'landscape' ? sizes.h : sizes.w
+  const trimH = orientation === 'landscape' ? sizes.w : sizes.h
+
+  // PDF page includes bleed on all sides when enabled
+  const bMm   = bleed ? BLEED_MM : 0
+  const pdfW  = trimW + bMm * 2
+  const pdfH  = trimH + bMm * 2
+
+  // Capture scale → target 300 DPI
+  // Element is rendered at screen px; we need targetPx wide at 300 DPI
+  const elW        = allEls[0].getBoundingClientRect().width
+  const targetPxW  = trimW * (PRINT_DPI / MM_PER_INCH)   // e.g. A4 portrait → 2480 px
+  const scale      = Math.max(3, Math.min(8, Math.ceil(targetPxW / elW)))
 
   const pdf = new jsPDF({
-    orientation: pxW > pxH ? 'landscape' : 'portrait',
-    unit: 'px',
-    format: [pxW, pxH],
-    hotfixes: ['px_scaling'],
+    orientation: trimW > trimH ? 'landscape' : 'portrait',
+    unit: 'mm',
+    format: [pdfW, pdfH],
+  })
+
+  // Embed print metadata
+  pdf.setProperties({
+    title: 'Spread Studio Catalog',
+    creator: 'Spread Studio',
+    keywords: 'catalog, print-ready',
   })
 
   for (let i = 0; i < allEls.length; i++) {
     onProgress?.(Math.round((i / allEls.length) * 90))
-    const canvas = await captureElement(allEls[i])
-    const imgData = canvas.toDataURL('image/jpeg', 0.92)
-    if (i > 0) pdf.addPage([pxW, pxH])
-    pdf.addImage(imgData, 'JPEG', 0, 0, pxW, pxH)
-    if (bleed) addCropMarks(pdf, pxW, pxH, 3)
+    const canvas  = await captureElement(allEls[i], scale)
+    // PNG for lossless quality
+    const imgData = canvas.toDataURL('image/png')
+    if (i > 0) pdf.addPage([pdfW, pdfH])
+    // Place image at bleed offset; fills trim area exactly
+    pdf.addImage(imgData, 'PNG', bMm, bMm, trimW, trimH, undefined, 'FAST')
+    if (bleed) addCropMarksMm(pdf, trimW, trimH, bMm)
   }
 
   onProgress?.(100)
