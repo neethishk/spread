@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from 'react'
 import { useStore } from '../store'
 import { useShallow } from 'zustand/react/shallow'
 import { parseCSV } from '../utils/csvParser'
+import { makeProducts } from '../constants'
 import type { Product } from '../types'
 
 const accent = 'oklch(0.57 0.2 25)'
@@ -118,6 +119,22 @@ Instant Pot Duo 7-in-1,Kitchen,99.00,59.00,6qt Pressure cooker,,,`
         {error && (
           <div style={{ marginTop: 16, padding: '12px 16px', borderRadius: 10, background: 'oklch(0.97 0.04 25)', border: '1px solid oklch(0.88 0.08 25)', color: 'oklch(0.45 0.18 25)', fontSize: 14 }}>
             {error}
+          </div>
+        )}
+
+        {/* Start from scratch */}
+        {!preview && (
+          <div style={{ marginTop: 24, padding: '20px 24px', borderRadius: 14, background: '#fff', border: '1px solid #EAE6DD', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Start from scratch</div>
+              <div style={{ fontSize: 13, color: '#6B645A' }}>Jump straight into the editor with sample products you can replace.</div>
+            </div>
+            <button
+              onClick={() => loadCSV(makeProducts())}
+              style={{ border: 'none', background: accent, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 700, padding: '10px 18px', borderRadius: 9, whiteSpace: 'nowrap', flexShrink: 0, marginLeft: 16 }}
+            >
+              Open editor →
+            </button>
           </div>
         )}
 

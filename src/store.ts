@@ -526,6 +526,7 @@ export const useStore = create<AppState>((set, get) => ({
       selectedFreeIds: [el.id],
       freeElPageKey: pageKey,
       activePageKey: pageKey,
+      selected: null,
       tool: 'select',
     }))
   },

@@ -110,8 +110,10 @@ export interface Project {
 }
 
 export interface Selection {
-  type: 'product' | 'cover' | 'banner'
+  type: 'product' | 'cover' | 'banner' | 'page'
   id?: string
+  pIdx?: number
+  mpId?: string
 }
 
 export interface HistorySnap {

@@ -8,19 +8,22 @@ export default function RightPanel() {
   const {
     selected, template, gridKey, pageSize, orientation,
     accentKey, customAccent, badge, products, manualPages, banners, cover,
-    pageElements, selectedFreeIds, freeElPageKey,
+    pageElements, selectedFreeIds, freeElPageKey, pageGrids,
     set, updateProduct, updateOv, duplicateProduct, removeProduct, moveProduct,
     updateFreeEl, deleteFreeEls, groupFreeEls, ungroupFreeEls,
+    setPageGrid, setManualGrid,
   } = useStore(useShallow((s) => ({
     selected: s.selected, template: s.template, gridKey: s.gridKey,
     pageSize: s.pageSize, orientation: s.orientation,
     accentKey: s.accentKey, customAccent: s.customAccent, badge: s.badge,
     products: s.products, manualPages: s.manualPages, banners: s.banners, cover: s.cover,
     pageElements: s.pageElements, selectedFreeIds: s.selectedFreeIds, freeElPageKey: s.freeElPageKey,
+    pageGrids: s.pageGrids,
     set: s.set, updateProduct: s.updateProduct, updateOv: s.updateOv,
     duplicateProduct: s.duplicateProduct, removeProduct: s.removeProduct, moveProduct: s.moveProduct,
     updateFreeEl: s.updateFreeEl, deleteFreeEls: s.deleteFreeEls,
     groupFreeEls: s.groupFreeEls, ungroupFreeEls: s.ungroupFreeEls,
+    setPageGrid: s.setPageGrid, setManualGrid: s.setManualGrid,
   })))
 
   const ac = computeAccent(accentKey, customAccent)
@@ -614,6 +617,65 @@ export default function RightPanel() {
               <button onClick={() => deleteFreeEls(pgKey, selectedFreeIds)} style={{ border: '1px solid #FECACA', background: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, padding: 11, borderRadius: 10, color: '#DC2626' }}>
                 Delete element{selectedFreeIds.length > 1 ? 's' : ''}
               </button>
+            </div>
+          </>
+        )
+      })()}
+
+      {/* ===== PAGE INSPECTOR ===== */}
+      {inspMode === 'page' && selected && (() => {
+        const isContent = selected.pIdx !== undefined
+        const mp = selected.mpId ? manualPages.find((m) => m.id === selected.mpId) : null
+        const curGKey = isContent
+          ? ((pageGrids[selected.pIdx!] as GridKey) ?? gridKey)
+          : ((mp?.gridKey as GridKey) ?? gridKey)
+        return (
+          <>
+            <div style={{ position: 'sticky', top: 0, background: '#FBF9F4', zIndex: 2, padding: '18px 22px 14px', borderBottom: '1px solid #EAE6DD', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <button onClick={() => set({ selected: null })} style={{ border: 'none', background: '#F0ECE3', cursor: 'pointer', width: 30, height: 30, borderRadius: 8, fontSize: 15, color: '#211D17' }}>←</button>
+              <div style={{ lineHeight: 1.1 }}>
+                <div style={{ fontWeight: 800, fontSize: 15 }}>Page settings</div>
+                <div style={{ fontSize: 11.5, color: '#9A9182', fontFamily: "'Space Mono', monospace" }}>
+                  {isContent ? `CONTENT PAGE ${selected.pIdx! + 1}` : (mp?.title || 'CUSTOM PAGE').toUpperCase()}
+                </div>
+              </div>
+            </div>
+            <div style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+              <div>
+                <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: '1.5px', color: '#9A9182', marginBottom: 5 }}>GRID LAYOUT</div>
+                <div style={{ fontSize: 11, color: '#B7AE9E', marginBottom: 11, lineHeight: 1.4 }}>Override the grid for this page only.</div>
+                <div style={{ display: 'flex', gap: 9 }}>
+                  {Object.keys(GRIDS).map((k) => {
+                    const g = GRIDS[k as GridKey]
+                    const active = k === curGKey
+                    return (
+                      <div
+                        key={k}
+                        onClick={() => isContent ? setPageGrid(selected.pIdx!, k as GridKey) : (mp && setManualGrid(mp.id, k as GridKey))}
+                        title={k}
+                        style={{ flex: 1, cursor: 'pointer', background: '#fff', borderRadius: 9, padding: '8px 6px 6px', boxShadow: ring(active, accent), display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}
+                      >
+                        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${g.cols}, 1fr)`, gap: 2, width: 22 }}>
+                          {Array.from({ length: g.cols * g.rows }).map((_, i) => (
+                            <div key={i} style={{ aspectRatio: '1', background: active ? accent : '#D5CEC1', borderRadius: 1 }} />
+                          ))}
+                        </div>
+                        <span style={{ fontSize: 9.5, fontWeight: 700, color: active ? '#211D17' : '#9A9182' }}>{k.replace('x', '×')}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+              {mp && (
+                <div>
+                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: '1.5px', color: '#9A9182', marginBottom: 12 }}>PAGE TITLE</div>
+                  <input
+                    className="sp-in"
+                    value={mp.title}
+                    onChange={(e) => set({ manualPages: manualPages.map((m) => m.id === mp.id ? { ...m, title: e.target.value } : m) })}
+                  />
+                </div>
+              )}
             </div>
           </>
         )

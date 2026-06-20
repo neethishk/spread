@@ -2,7 +2,6 @@ import { useStore } from '../../store'
 import { useShallow } from 'zustand/react/shallow'
 import { computeAccent, computePageDimensions, gridTokens, enrichItem } from './helpers'
 import type { GridKey } from '../../types'
-import { GRIDS } from '../../constants'
 import FreeLayer from './FreeLayer'
 
 export default function Canvas() {
@@ -11,7 +10,7 @@ export default function Canvas() {
     products, manualPages, pageGrids, gridKey,
     cover, banners, badge, accentKey, customAccent,
     selected, editingId, dragId,
-    set, stopEdit, liveProduct, startEdit, setPageGrid, setManualGrid, addDealToPage, reorder,
+    set, stopEdit, liveProduct, startEdit, addDealToPage, reorder,
     tool,
   } = useStore(useShallow((s) => ({
     showRulers: s.showRulers, showGuides: s.showGuides, zoom: s.zoom,
@@ -22,13 +21,12 @@ export default function Canvas() {
     selected: s.selected, editingId: s.editingId, dragId: s.dragId,
     tool: s.tool,
     set: s.set, stopEdit: s.stopEdit, liveProduct: s.liveProduct,
-    startEdit: s.startEdit, setPageGrid: s.setPageGrid, setManualGrid: s.setManualGrid,
-    addDealToPage: s.addDealToPage, reorder: s.reorder,
+    startEdit: s.startEdit, addDealToPage: s.addDealToPage, reorder: s.reorder,
   })))
 
   const ac = computeAccent(accentKey, customAccent)
   const accent = ac.color
-  const { pageW, pageH, sizeLabel } = computePageDimensions(pageSize, orientation)
+  const { pageW, pageH } = computePageDimensions(pageSize, orientation)
   const gtk = gridTokens(gridKey, pageH, template)
   const ban = banners[template] ?? { title: 'DEALS', sub: '' }
 
@@ -102,7 +100,7 @@ export default function Canvas() {
             {/* COVER PAGE */}
             <div
               id="sp-cover"
-              onClick={(e) => { e.stopPropagation(); set({ selected: { type: 'cover' }, selectedFreeIds: [], activePageKey: 'cover' }) }}
+              onPointerDown={(e) => { e.stopPropagation(); set({ selected: { type: 'cover' }, selectedFreeIds: [], activePageKey: 'cover', freeElPageKey: null }) }}
               style={{ position: 'relative', width: pageW, height: pageH, background: '#fff', borderRadius: 4, boxShadow: coverRing, overflow: 'hidden', marginBottom: 26, cursor: 'pointer', display: 'flex', flexDirection: 'column' }}
             >
               <div style={{ flex: 1, background: accent, color: '#fff', padding: '7% 8% 8%', position: 'relative', display: 'flex', flexDirection: 'column' }}>
@@ -132,7 +130,7 @@ export default function Canvas() {
               <div
                 key={pgI}
                 id={`sp-pg-${pgI}`}
-                onClick={() => set({ activePageKey: `pg-${pgI}` })}
+                onClick={() => set({ activePageKey: `pg-${pgI}`, selected: { type: 'page', pIdx: pgI } })}
                 style={{ position: 'relative', width: pageW, height: pageH, background: '#fff', borderRadius: 4, boxShadow: '0 10px 30px rgba(33,29,23,.12)', overflow: 'hidden', marginBottom: 26, display: 'flex', flexDirection: 'column' }}
               >
                 {showGuides && (
@@ -142,14 +140,11 @@ export default function Canvas() {
                 )}
                 {/* Banner */}
                 <div
-                  onClick={(e) => { e.stopPropagation(); set({ selected: { type: 'banner' }, selectedFreeIds: [] }) }}
-                  style={{ flex: 'none', background: accent, color: '#fff', padding: '9px 12px 9px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', boxShadow: bannerRing }}
+                  onPointerDown={(e) => { e.stopPropagation(); set({ selected: { type: 'banner' }, selectedFreeIds: [], freeElPageKey: null }) }}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ flex: 'none', background: accent, color: '#fff', padding: '9px 12px 9px 22px', display: 'flex', alignItems: 'center', cursor: 'pointer', boxShadow: bannerRing }}
                 >
                   <span style={{ fontFamily: "'Anton', sans-serif", fontSize: 22, transform: 'skewX(-7deg)', display: 'inline-block' }}>{ban.title}</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-                    <GridSelector gKey={pg.gKey} accent={accent} onChange={(gk) => setPageGrid(pg.pIdx, gk)} />
-                    <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 9.5, opacity: 0.9, letterSpacing: '1px', whiteSpace: 'nowrap' }}>PAGE {pg.pIdx + 1}/{contentPageCount}</span>
-                  </div>
                 </div>
                 {/* Cells grid */}
                 <div
@@ -170,10 +165,6 @@ export default function Canvas() {
                     />
                   ))}
                 </div>
-                {/* Footer */}
-                <div style={{ flex: 'none', padding: '7px 22px', display: 'flex', justifyContent: 'space-between', fontFamily: "'Space Mono', monospace", fontSize: 9.5, color: '#B7AE9E', letterSpacing: '0.5px', borderTop: '1px solid #F0ECE3' }}>
-                  <span>{cover.brand} · WHILE STOCKS LAST</span><span>{sizeLabel} · PAGE {pgI + 2}</span>
-                </div>
                 <FreeLayer pageKey={`pg-${pgI}`} pageW={pageW} pageH={pageH} accent={accent} />
               </div>
             ))}
@@ -187,15 +178,11 @@ export default function Canvas() {
                 <div
                   key={mp.id}
                   id={`sp-mp-${mp.id}`}
-                  onClick={() => set({ activePageKey: `mp-${mp.id}` })}
+                  onClick={() => set({ activePageKey: `mp-${mp.id}`, selected: { type: 'page', mpId: mp.id } })}
                   style={{ position: 'relative', width: pageW, height: pageH, background: '#fff', borderRadius: 4, boxShadow: '0 10px 30px rgba(33,29,23,.12)', overflow: 'hidden', marginBottom: 26, display: 'flex', flexDirection: 'column' }}
                 >
-                  <div style={{ flex: 'none', background: accent, color: '#fff', padding: '9px 12px 9px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ flex: 'none', background: accent, color: '#fff', padding: '9px 12px 9px 22px', display: 'flex', alignItems: 'center' }}>
                     <span style={{ fontFamily: "'Anton', sans-serif", fontSize: 22, transform: 'skewX(-7deg)', display: 'inline-block' }}>{mp.title || 'NEW PAGE'}</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-                      <GridSelector gKey={gKey} accent={accent} onChange={(gk) => setManualGrid(mp.id, gk)} />
-                      <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 9.5, opacity: 0.9, letterSpacing: '1px', whiteSpace: 'nowrap' }}>CUSTOM</span>
-                    </div>
                   </div>
                   {items.length === 0 ? (
                     <div onClick={(e) => { e.stopPropagation(); addDealToPage(mp.id) }} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
@@ -226,9 +213,6 @@ export default function Canvas() {
                       </div>
                     </div>
                   )}
-                  <div style={{ flex: 'none', padding: '7px 22px', display: 'flex', justifyContent: 'space-between', fontFamily: "'Space Mono', monospace", fontSize: 9.5, color: '#B7AE9E', letterSpacing: '0.5px', borderTop: '1px solid #F0ECE3' }}>
-                    <span>{cover.brand} · CUSTOM PAGE</span><span>{sizeLabel}</span>
-                  </div>
                   <FreeLayer pageKey={`mp-${mp.id}`} pageW={pageW} pageH={pageH} accent={accent} />
                 </div>
               )
@@ -240,22 +224,6 @@ export default function Canvas() {
   )
 }
 
-// Grid selector pill in page banner
-function GridSelector({ gKey, accent, onChange }: { gKey: GridKey; accent: string; onChange: (k: GridKey) => void }) {
-  return (
-    <div style={{ display: 'flex', gap: 2, background: 'rgba(0,0,0,.14)', borderRadius: 8, padding: 2 }} title="Grid for this page">
-      {Object.keys(GRIDS).map((k) => (
-        <button
-          key={k}
-          onClick={(e) => { e.stopPropagation(); onChange(k as GridKey) }}
-          style={{ border: 'none', cursor: 'pointer', fontFamily: "'Space Mono', monospace", fontSize: 9.5, fontWeight: 700, padding: '3px 7px', borderRadius: 6, background: k === gKey ? '#fff' : 'transparent', color: k === gKey ? accent : 'rgba(255,255,255,.82)' }}
-        >
-          {k.replace('x', '×')}
-        </button>
-      ))}
-    </div>
-  )
-}
 
 // Individual product cell
 interface ProductCellProps {
