@@ -68,6 +68,7 @@ interface AppState {
   loadProjects: () => Promise<void>
   saveProject: () => Promise<void>
   deleteProject: (id: string) => Promise<void>
+  renameProject: (id: string, name: string) => void
   startProcessing: () => void
   loadCSV: (products: Product[]) => void
   createImportedProject: (products: Product[], filename: string) => Promise<void>
@@ -247,6 +248,14 @@ export const useStore = create<AppState>((set, get) => ({
   deleteProject: async (id) => {
     if (!id.startsWith('pr')) await supabase.from('projects').delete().eq('id', id)
     set((s) => ({ projects: s.projects.filter((p) => p.id !== id) }))
+  },
+
+  renameProject: (id, name) => {
+    set((s) => ({
+      projects: s.projects.map((p) => p.id === id ? { ...p, name } : p),
+      ...(s.activeProjectId === id ? { catalogName: name } : {}),
+    }))
+    if (!id.startsWith('pr')) supabase.from('projects').update({ name, catalog_name: name }).eq('id', id)
   },
 
   startProcessing: () => {
@@ -505,21 +514,39 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   loadCSV: (products) => {
-    set({
-      screen: 'editor',
-      products,
-      manualPages: [],
-      pageGrids: {},
-      selected: null,
-      editingId: null,
-      history: [],
-      future: [],
-      leftTab: 'deals',
-      catalogName: 'My Catalog',
-      accentKey: 'red',
-      template: 'promo',
-      gridKey: products.length > 18 ? '4x4' : products.length > 9 ? '3x3' : '2x2',
-    })
+    const s = get()
+    const user = s.user
+    const tempId = 'pr' + Date.now()
+    const gKey: GridKey = products.length > 18 ? '4x4' : products.length > 9 ? '3x3' : '2x2'
+    const np: Project = {
+      id: tempId, name: 'My Catalog', store: 'YOUR STORE', accent: 'oklch(0.57 0.2 25)',
+      badge: '#F7CC3A', template: 'promo', gridKey: gKey, pageSize: 'a4',
+      dealCount: products.length, updated: 'Just now',
+      headline1: 'WEEKEND', headline2: 'DEALS', burst: 'UP TO 60% OFF',
+    }
+    set((s2) => ({
+      screen: 'editor', products, manualPages: [], pageGrids: {},
+      selected: null, editingId: null, history: [], future: [], leftTab: 'deals',
+      catalogName: np.name, accentKey: 'red', template: 'promo', gridKey: gKey,
+      activeProjectId: tempId, projects: [np, ...s2.projects],
+      cover: { brand: 'YOUR STORE', headline1: 'WEEKEND', headline2: 'DEALS', burst: 'UP TO 60% OFF', validity: 'VALID THIS WEEK' },
+      banners: JSON.parse(JSON.stringify(DEFAULT_BANNERS)),
+    }))
+    if (user) {
+      supabase.from('projects').insert({
+        user_id: user.id, name: np.name, store: np.store, accent: np.accent, badge: np.badge,
+        template: np.template, grid_key: np.gridKey, page_size: np.pageSize, orientation: 'portrait',
+        headline1: np.headline1, headline2: np.headline2, burst: np.burst, validity: 'VALID THIS WEEK',
+        products, manual_pages: [], page_grids: {}, banners: DEFAULT_BANNERS,
+        cover: { brand: np.store, headline1: np.headline1, headline2: np.headline2, burst: np.burst, validity: 'VALID THIS WEEK' },
+        catalog_name: np.name,
+      }).select().single().then(({ data }) => {
+        if (data) set((s3) => ({
+          activeProjectId: data.id,
+          projects: s3.projects.map((p) => p.id === tempId ? { ...p, id: data.id } : p),
+        }))
+      })
+    }
   },
 
   createImportedProject: async (products, filename) => {

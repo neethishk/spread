@@ -1,15 +1,34 @@
+import { useState } from 'react'
 import { useStore } from '../store'
 import { useShallow } from 'zustand/react/shallow'
 
 const accent = 'oklch(0.57 0.2 25)'
 
 export default function Projects() {
-  const { projects, goPricing, signOut, newProject, openProject, user } = useStore(useShallow((s) => ({
+  const { projects, goPricing, signOut, newProject, openProject, deleteProject, renameProject, user } = useStore(useShallow((s) => ({
     projects: s.projects, goPricing: s.goPricing, signOut: s.signOut,
-    newProject: s.newProject, openProject: s.openProject, user: s.user,
+    newProject: s.newProject, openProject: s.openProject,
+    deleteProject: s.deleteProject, renameProject: s.renameProject, user: s.user,
   })))
 
-  const initial = user?.email?.[0]?.toUpperCase() ?? 'A'
+  const [renamingId, setRenamingId] = useState<string | null>(null)
+  const [renameVal, setRenameVal] = useState('')
+
+  const startRename = (e: React.MouseEvent, id: string, name: string) => {
+    e.stopPropagation()
+    setRenamingId(id)
+    setRenameVal(name)
+  }
+
+  const commitRename = (id: string) => {
+    if (renameVal.trim()) renameProject(id, renameVal.trim())
+    setRenamingId(null)
+  }
+
+  const handleDelete = (e: React.MouseEvent, id: string, name: string) => {
+    e.stopPropagation()
+    if (window.confirm(`Delete "${name}"? This cannot be undone.`)) deleteProject(id)
+  }
 
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden', background: '#F6F3ED', color: '#211D17', fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>
@@ -25,12 +44,13 @@ export default function Projects() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <span onClick={goPricing} style={{ cursor: 'pointer', fontSize: 14, color: '#6B645A' }}>Pricing</span>
-            <div
-              onClick={signOut} title="Sign out"
-              style={{ width: 34, height: 34, borderRadius: '50%', background: accent, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}
+            {user?.email && <span style={{ fontSize: 13, color: '#6B645A' }}>{user.email}</span>}
+            <button
+              onClick={signOut}
+              style={{ border: '1px solid #E0DACE', background: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, padding: '8px 15px', borderRadius: 8, color: '#211D17' }}
             >
-              {initial}
-            </div>
+              Log out
+            </button>
           </div>
         </div>
 
@@ -64,21 +84,62 @@ export default function Projects() {
 
             {projects.map((p) => (
               <div
-                key={p.id} onClick={() => openProject(p.id)} className="sp-proj"
-                style={{ cursor: 'pointer', borderRadius: 16, background: '#fff', boxShadow: '0 1px 3px rgba(33,29,23,.1)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
+                key={p.id} className="sp-proj"
+                style={{ cursor: 'pointer', borderRadius: 16, background: '#fff', boxShadow: '0 1px 3px rgba(33,29,23,.1)', overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative' }}
               >
-                <div style={{ height: 140, background: p.accent, color: '#fff', padding: 18, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', position: 'relative' }}>
+                {/* Thumbnail */}
+                <div
+                  onClick={() => openProject(p.id)}
+                  style={{ height: 140, background: p.accent, color: '#fff', padding: 18, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', position: 'relative' }}
+                >
                   <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, letterSpacing: '1px', opacity: 0.9 }}>{p.store}</div>
                   <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 30, lineHeight: 0.88, transform: 'skewX(-7deg)', transformOrigin: 'left' }}>
                     {p.headline1}<br />{p.headline2}
                   </div>
                   <div style={{ position: 'absolute', top: 14, right: 14, width: 20, height: 20, borderRadius: 5, background: p.badge }} />
                 </div>
-                <div style={{ padding: '16px 18px' }}>
-                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontFamily: "'Space Mono', monospace", fontSize: 11, color: '#9A9182' }}>
-                    <span>{p.dealCount} deals</span>
-                    <span>{p.updated}</span>
+
+                {/* Card footer */}
+                <div style={{ padding: '12px 16px 14px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {renamingId === p.id ? (
+                    <input
+                      autoFocus
+                      value={renameVal}
+                      onChange={(e) => setRenameVal(e.target.value)}
+                      onBlur={() => commitRename(p.id)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') commitRename(p.id); if (e.key === 'Escape') setRenamingId(null) }}
+                      onClick={(e) => e.stopPropagation()}
+                      style={{ fontWeight: 700, fontSize: 15, border: 'none', outline: `2px solid ${accent}`, borderRadius: 5, padding: '2px 5px', fontFamily: 'inherit', color: '#211D17', width: '100%' }}
+                    />
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div
+                        onClick={() => openProject(p.id)}
+                        style={{ fontWeight: 700, fontSize: 15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}
+                      >
+                        {p.name}
+                      </div>
+                      <button
+                        onClick={(e) => startRename(e, p.id, p.name)}
+                        title="Rename"
+                        style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#B7AE9E', fontSize: 12, padding: '2px 4px', borderRadius: 5, flex: 'none' }}
+                      >
+                        ✎
+                      </button>
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: '#9A9182' }}>
+                      {p.dealCount} deals · {p.updated}
+                    </div>
+                    <button
+                      onClick={(e) => handleDelete(e, p.id, p.name)}
+                      title="Delete project"
+                      style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#C2BBA8', fontSize: 13, padding: '2px 4px', borderRadius: 5 }}
+                    >
+                      ✕
+                    </button>
                   </div>
                 </div>
               </div>

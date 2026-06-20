@@ -52,6 +52,15 @@ export const DEFAULT_BANNERS: Record<Template, BannerDef> = {
   custom: { title: 'YOUR SECTION',         sub: 'CUSTOM LAYOUT' },
 }
 
+export const CATALOG_THEMES = [
+  { key: 'weekend',  name: 'Weekend Deals',   headline1: 'WEEKEND',   headline2: 'DEALS',   burst: 'UP TO 60% OFF', bannerTitle: 'WEEKEND DEALS' },
+  { key: 'summer',   name: 'Summer Deals',    headline1: 'SUMMER',    headline2: 'DEALS',   burst: 'HOT SAVINGS',   bannerTitle: 'SUMMER SAVERS' },
+  { key: 'school',   name: 'Back to School',  headline1: 'BACK TO',   headline2: 'SCHOOL',  burst: 'GREAT VALUE',   bannerTitle: 'BACK TO SCHOOL' },
+  { key: 'ramadan',  name: 'Ramadan Specials',headline1: 'RAMADAN',   headline2: 'SPECIALS',burst: 'SAVE BIG',      bannerTitle: 'RAMADAN SPECIALS' },
+  { key: 'friday',   name: 'Black Friday',    headline1: 'BLACK',     headline2: 'FRIDAY',  burst: '0% EMI',        bannerTitle: 'BLACK FRIDAY' },
+  { key: 'payday',   name: 'Payday Savers',   headline1: 'PAYDAY',    headline2: 'SAVERS',  burst: 'EXTRA 10% OFF', bannerTitle: 'PAYDAY PICKS' },
+] as const
+
 export const TPL_DEFS = [
   { key: 'promo',  name: 'Promo Grid',  desc: 'Clean deal cells' },
   { key: 'mega',   name: 'Mega Saver',  desc: 'Bold accent-bar cells' },

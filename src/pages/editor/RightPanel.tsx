@@ -1,7 +1,7 @@
 import { useStore } from '../../store'
 import { useShallow } from 'zustand/react/shallow'
 import { computeAccent, computePageDimensions, gridTokens, ring, swX } from './helpers'
-import { ACCENTS, PALETTES, TPL_DEFS, GRIDS, SIZES, TAGCOL } from '../../constants'
+import { ACCENTS, PALETTES, TPL_DEFS, CATALOG_THEMES, GRIDS, SIZES, TAGCOL } from '../../constants'
 import type { GridKey, FreeElement } from '../../types'
 
 export default function RightPanel() {
@@ -60,6 +60,28 @@ export default function RightPanel() {
       {inspMode === 'none' && (
         <div style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 26 }}>
 
+          {/* Catalog Themes */}
+          <div>
+            <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: '1.5px', color: '#9A9182', marginBottom: 14 }}>CATALOG THEMES</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {CATALOG_THEMES.map((t) => (
+                <div
+                  key={t.key}
+                  onClick={() => set({
+                    cover: { ...cover, headline1: t.headline1, headline2: t.headline2, burst: t.burst },
+                    banners: { ...banners, [template]: { ...ban, title: t.bannerTitle } },
+                  })}
+                  style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '10px 11px', borderRadius: 11, cursor: 'pointer', background: '#fff', boxShadow: '0 0 0 1px #EAE6DD' }}
+                >
+                  <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 13, lineHeight: 0.95, color: '#211D17', transform: 'skewX(-5deg)', transformOrigin: 'left' }}>
+                    {t.headline1}<br />{t.headline2}
+                  </div>
+                  <div style={{ fontSize: 10.5, color: '#9A9182' }}>{t.name}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Template */}
           <div>
             <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: '1.5px', color: '#9A9182', marginBottom: 14 }}>TEMPLATE</div>
@@ -86,7 +108,7 @@ export default function RightPanel() {
           {/* Default Grid */}
           <div>
             <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: '1.5px', color: '#9A9182', marginBottom: 5 }}>DEFAULT GRID</div>
-            <div style={{ fontSize: 11, color: '#B7AE9E', marginBottom: 11, lineHeight: 1.4 }}>New pages use this. Change any single page from the bar at the top of that page.</div>
+            <div style={{ fontSize: 11, color: '#B7AE9E', marginBottom: 11, lineHeight: 1.4 }}>New pages use this. Click any page to override its grid in this panel.</div>
             <div style={{ display: 'flex', gap: 9 }}>
               {Object.keys(GRIDS).map((k) => {
                 const g = GRIDS[k as GridKey]
@@ -241,8 +263,12 @@ export default function RightPanel() {
                 <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: '1.5px', color: '#9A9182', marginBottom: 12 }}>CONTENT</div>
                 <label style={{ fontSize: 11.5, fontWeight: 700, color: '#6B645A', display: 'block', marginBottom: 6 }}>Product name</label>
                 <input className="sp-in" value={sp.name} onChange={(e) => updateProduct(id, { name: e.target.value })} />
+                <label style={{ fontSize: 11.5, fontWeight: 700, color: '#6B645A', display: 'block', margin: '12px 0 6px' }}>Category</label>
+                <input className="sp-in" value={sp.category} onChange={(e) => updateProduct(id, { category: e.target.value })} />
                 <label style={{ fontSize: 11.5, fontWeight: 700, color: '#6B645A', display: 'block', margin: '12px 0 6px' }}>Description</label>
                 <input className="sp-in" value={sp.desc} onChange={(e) => updateProduct(id, { desc: e.target.value })} />
+                <label style={{ fontSize: 11.5, fontWeight: 700, color: '#6B645A', display: 'block', margin: '12px 0 6px' }}>Image URL</label>
+                <input className="sp-in" placeholder="https://..." value={sp.imageUrl ?? ''} onChange={(e) => updateProduct(id, { imageUrl: e.target.value || undefined })} />
                 <label style={{ fontSize: 11.5, fontWeight: 700, color: '#6B645A', display: 'block', margin: '12px 0 6px' }}>Body text</label>
                 <input className="sp-in" value={sp.text ?? ''} onChange={(e) => updateProduct(id, { text: e.target.value })} />
                 <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>

@@ -1,13 +1,14 @@
 import { useStore } from '../store'
+import { useShallow } from 'zustand/react/shallow'
 import { PRICING_TIERS } from '../constants'
 
 const accent = 'oklch(0.57 0.2 25)'
 const badge = 'oklch(0.86 0.16 92)'
 
 export default function Pricing() {
-  const { goHome, goSignin, goSignup, set } = useStore((s) => ({
+  const { goHome, goSignin, goSignup, set } = useStore(useShallow((s) => ({
     goHome: s.goHome, goSignin: s.goSignin, goSignup: s.goSignup, set: s.set,
-  }))
+  })))
 
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden', background: '#F6F3ED', color: '#211D17', fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>

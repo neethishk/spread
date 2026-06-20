@@ -7,11 +7,12 @@ import type { Product } from '../types'
 const accent = 'oklch(0.57 0.2 25)'
 
 export default function CsvUpload() {
-  const { createImportedProject, createEmptyProject, goProjects, goHome, user } = useStore(useShallow((s) => ({
+  const { createImportedProject, createEmptyProject, goProjects, goHome, signOut, user } = useStore(useShallow((s) => ({
     createImportedProject: s.createImportedProject,
     createEmptyProject: s.createEmptyProject,
     goProjects: s.goProjects,
     goHome: s.goHome,
+    signOut: s.signOut,
     user: s.user,
   })))
 
@@ -84,6 +85,7 @@ Instant Pot Duo 7-in-1,Kitchen,99.00,59.00,6qt Pressure cooker,,,`
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           {user?.email && <span style={{ fontSize: 13, color: '#6B645A' }}>{user.email}</span>}
           <button onClick={goProjects} style={{ border: '1px solid #E0DACE', background: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, padding: '8px 15px', borderRadius: 8, color: '#211D17' }}>My projects</button>
+          {user && <button onClick={signOut} style={{ border: '1px solid #E0DACE', background: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, padding: '8px 15px', borderRadius: 8, color: '#6B645A' }}>Log out</button>}
         </div>
       </div>
 

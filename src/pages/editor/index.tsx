@@ -13,8 +13,8 @@ export default function Editor() {
   const {
     zoom, showRulers, showGuides, catalogName,
     products, manualPages, pageSize, orientation, gridKey, template,
-    accentKey, customAccent, selected, history, future,
-    set, zoomStep, undo, redo, goProjects,
+    accentKey, customAccent, selected, history, future, user,
+    set, zoomStep, undo, redo, goProjects, signOut,
     selectedFreeIds, freeElPageKey, pageElements, deleteFreeEls, moveFreeEls,
   } = useStore(useShallow((s) => ({
     zoom: s.zoom, showRulers: s.showRulers, showGuides: s.showGuides,
@@ -22,7 +22,8 @@ export default function Editor() {
     pageSize: s.pageSize, orientation: s.orientation,
     gridKey: s.gridKey, template: s.template, accentKey: s.accentKey,
     customAccent: s.customAccent, selected: s.selected, history: s.history, future: s.future,
-    set: s.set, zoomStep: s.zoomStep, undo: s.undo, redo: s.redo, goProjects: s.goProjects,
+    user: s.user,
+    set: s.set, zoomStep: s.zoomStep, undo: s.undo, redo: s.redo, goProjects: s.goProjects, signOut: s.signOut,
     selectedFreeIds: s.selectedFreeIds, freeElPageKey: s.freeElPageKey,
     pageElements: s.pageElements, deleteFreeEls: s.deleteFreeEls, moveFreeEls: s.moveFreeEls,
   })))
@@ -153,6 +154,16 @@ export default function Editor() {
           </button>
 
           <div style={{ width: 1, height: 20, background: '#EAE6DD', flex: 'none' }} />
+
+          {user && (
+            <button
+              onClick={signOut}
+              title="Log out"
+              style={{ border: '1px solid #E0DACE', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, padding: '9px 14px', borderRadius: 9, background: '#fff', color: '#6B645A' }}
+            >
+              Log out
+            </button>
+          )}
 
           <button
             onClick={() => set({ exportOpen: true, exportStage: 'config' })}
