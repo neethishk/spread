@@ -2,14 +2,14 @@ import { useState, useRef, useCallback } from 'react'
 import { useStore } from '../store'
 import { useShallow } from 'zustand/react/shallow'
 import { parseCSV } from '../utils/csvParser'
-import { makeProducts } from '../constants'
 import type { Product } from '../types'
 
 const accent = 'oklch(0.57 0.2 25)'
 
 export default function CsvUpload() {
-  const { loadCSV, goProjects, goHome, user } = useStore(useShallow((s) => ({
-    loadCSV: s.loadCSV,
+  const { createImportedProject, createEmptyProject, goProjects, goHome, user } = useStore(useShallow((s) => ({
+    createImportedProject: s.createImportedProject,
+    createEmptyProject: s.createEmptyProject,
     goProjects: s.goProjects,
     goHome: s.goHome,
     user: s.user,
@@ -50,7 +50,7 @@ export default function CsvUpload() {
   }
 
   const buildCatalog = () => {
-    if (preview) loadCSV(preview)
+    if (preview) createImportedProject(preview, fileName)
   }
 
   const downloadTemplate = () => {
@@ -127,10 +127,10 @@ Instant Pot Duo 7-in-1,Kitchen,99.00,59.00,6qt Pressure cooker,,,`
           <div style={{ marginTop: 24, padding: '20px 24px', borderRadius: 14, background: '#fff', border: '1px solid #EAE6DD', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
               <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Start from scratch</div>
-              <div style={{ fontSize: 13, color: '#6B645A' }}>Jump straight into the editor with sample products you can replace.</div>
+              <div style={{ fontSize: 13, color: '#6B645A' }}>Jump straight into the editor with a clean project.</div>
             </div>
             <button
-              onClick={() => loadCSV(makeProducts())}
+              onClick={() => createEmptyProject()}
               style={{ border: 'none', background: accent, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 700, padding: '10px 18px', borderRadius: 9, whiteSpace: 'nowrap', flexShrink: 0, marginLeft: 16 }}
             >
               Open editor →

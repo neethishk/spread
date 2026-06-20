@@ -52,6 +52,11 @@ export interface ProductOverride {
   borderW?: number
   borderColor?: string
   align?: 'left' | 'center' | 'right'
+  badgeBg?: string
+  badgeShape?: 'circle' | 'square' | 'rounded' | 'star' | 'burst'
+  badgeSize?: number
+  badgeX?: number
+  badgeY?: number
 }
 
 export interface Product {

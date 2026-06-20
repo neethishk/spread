@@ -383,6 +383,48 @@ export default function RightPanel() {
                 )}
               </div>
 
+              {/* Save Badge Style */}
+              {sp.showBadge !== false && (
+                <div>
+                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: '1.5px', color: '#9A9182', marginBottom: 12 }}>SAVE BADGE STYLE</div>
+                  
+                  <label style={{ fontSize: 11.5, fontWeight: 700, color: '#6B645A', display: 'block', marginBottom: 6 }}>Badge shape</label>
+                  <div style={{ display: 'flex', background: '#F0ECE3', borderRadius: 9, padding: 3, marginBottom: 14 }}>
+                    {(['circle', 'square', 'rounded', 'star', 'burst'] as const).map((sh) => (
+                      <button key={sh} onClick={() => updateOv(id, { badgeShape: sh })} style={{ flex: 1, border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 11, fontWeight: 600, padding: '7px 4px', borderRadius: 7, ...seg(ov.badgeShape === sh || (!ov.badgeShape && sh === 'circle')) }}>
+                        {sh[0].toUpperCase() + sh.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: '#6B645A', flex: 1 }}>Color</label>
+                    <label style={{ position: 'relative', width: 34, height: 34, flex: 'none', borderRadius: 9, overflow: 'hidden', cursor: 'pointer', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.1)' }}>
+                      <span style={{ position: 'absolute', inset: 0, background: ov.badgeBg ?? badge }} />
+                      <input type="color" value={ov.badgeBg ?? badge} onChange={(e) => updateOv(id, { badgeBg: e.target.value })} style={{ position: 'absolute', top: -6, left: -6, width: 48, height: 48, border: 'none', padding: 0, cursor: 'pointer', opacity: 0 }} />
+                    </label>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <label style={{ fontSize: 11.5, fontWeight: 700, color: '#6B645A' }}>Size</label>
+                    <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: '#9A9182' }}>{ov.badgeSize ?? gtk.saveDim}px</span>
+                  </div>
+                  <input type="range" min="20" max="100" value={ov.badgeSize ?? gtk.saveDim} onChange={(e) => updateOv(id, { badgeSize: parseInt(e.target.value) })} style={{ width: '100%', accentColor: accent, marginBottom: 14 }} />
+
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <label style={{ fontSize: 11.5, fontWeight: 700, color: '#6B645A' }}>Offset X (Right)</label>
+                    <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: '#9A9182' }}>{ov.badgeX ?? 6}px</span>
+                  </div>
+                  <input type="range" min="-10" max="60" value={ov.badgeX ?? 6} onChange={(e) => updateOv(id, { badgeX: parseInt(e.target.value) })} style={{ width: '100%', accentColor: accent, marginBottom: 14 }} />
+
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <label style={{ fontSize: 11.5, fontWeight: 700, color: '#6B645A' }}>Offset Y (Top)</label>
+                    <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: '#9A9182' }}>{ov.badgeY ?? 6}px</span>
+                  </div>
+                  <input type="range" min="-10" max="60" value={ov.badgeY ?? 6} onChange={(e) => updateOv(id, { badgeY: parseInt(e.target.value) })} style={{ width: '100%', accentColor: accent, marginBottom: 14 }} />
+                </div>
+              )}
+
               {/* Flag */}
               <div>
                 <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: '1.5px', color: '#9A9182', marginBottom: 12 }}>FLAG / RIBBON</div>

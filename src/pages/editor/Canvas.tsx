@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { useStore } from '../../store'
 import { useShallow } from 'zustand/react/shallow'
 import { computeAccent, computePageDimensions, gridTokens, enrichItem } from './helpers'
 import type { GridKey } from '../../types'
 import FreeLayer from './FreeLayer'
+import ContextMenu from './ContextMenu'
 
 export default function Canvas() {
   const {
@@ -11,7 +13,7 @@ export default function Canvas() {
     cover, banners, badge, accentKey, customAccent,
     selected, editingId, dragId,
     set, stopEdit, liveProduct, startEdit, addDealToPage, reorder,
-    tool,
+    tool, duplicateProduct, removeProduct, updateOv,
   } = useStore(useShallow((s) => ({
     showRulers: s.showRulers, showGuides: s.showGuides, zoom: s.zoom,
     pageSize: s.pageSize, orientation: s.orientation, template: s.template,
@@ -22,6 +24,7 @@ export default function Canvas() {
     tool: s.tool,
     set: s.set, stopEdit: s.stopEdit, liveProduct: s.liveProduct,
     startEdit: s.startEdit, addDealToPage: s.addDealToPage, reorder: s.reorder,
+    duplicateProduct: s.duplicateProduct, removeProduct: s.removeProduct, updateOv: s.updateOv,
   })))
 
   const ac = computeAccent(accentKey, customAccent)
@@ -31,6 +34,65 @@ export default function Canvas() {
   const ban = banners[template] ?? { title: 'DEALS', sub: '' }
 
   const inspMode = !selected ? 'none' : (selected.type === 'product' ? 'product' : selected.type)
+
+  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; item: ReturnType<typeof enrichItem> } | null>(null)
+
+  const handleProductContextMenu = (e: React.MouseEvent, item: ReturnType<typeof enrichItem>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    set({ selected: { type: 'product', id: item.id }, selectedFreeIds: [] })
+    setCtxMenu({ x: e.clientX, y: e.clientY, item })
+  }
+
+  const buildProductMenuItems = (item: ReturnType<typeof enrichItem>) => {
+    const ov = item.ov ?? {}
+    return [
+      { icon: '⧉', label: 'Duplicate Deal', onClick: () => duplicateProduct(item.id) },
+      { icon: '✕', label: 'Delete Deal', danger: true, onClick: () => removeProduct(item.id) },
+      { separator: true },
+      { icon: '↔', label: ov.span2 ? 'Shrink to 1 Column' : 'Span 2 Columns', onClick: () => updateOv(item.id, { span2: !ov.span2 }) },
+      { separator: true },
+      {
+        icon: '✏️',
+        label: 'Align Left',
+        disabled: (ov.align ?? item.align) === 'left',
+        onClick: () => updateOv(item.id, { align: 'left' }),
+      },
+      {
+        icon: '✏️',
+        label: 'Align Center',
+        disabled: (ov.align ?? item.align) === 'center',
+        onClick: () => updateOv(item.id, { align: 'center' }),
+      },
+      {
+        icon: '✏️',
+        label: 'Align Right',
+        disabled: (ov.align ?? item.align) === 'right',
+        onClick: () => updateOv(item.id, { align: 'right' }),
+      },
+      { separator: true },
+      {
+        icon: '🎨',
+        label: 'Set White Background',
+        onClick: () => updateOv(item.id, { bg: 'white' }),
+      },
+      {
+        icon: '🎨',
+        label: 'Set Cream Background',
+        onClick: () => updateOv(item.id, { bg: 'cream' }),
+      },
+      {
+        icon: '🎨',
+        label: 'Set Tint Background',
+        onClick: () => updateOv(item.id, { bg: 'tint' }),
+      },
+      {
+        icon: '🎨',
+        label: 'Set Accent Background',
+        onClick: () => updateOv(item.id, { bg: 'accent' }),
+      },
+    ]
+  }
 
   // Paginate products into content pages
   const pages: { tk: ReturnType<typeof gridTokens>; gKey: GridKey; items: ReturnType<typeof enrichItem>[]; startIndex: number; pIdx: number }[] = []
@@ -156,12 +218,19 @@ export default function Canvas() {
                       onSelect={(e) => { e.stopPropagation(); set({ selected: { type: 'product', id: item.id }, selectedFreeIds: [] }) }}
                       onDblName={(e) => { e.stopPropagation(); startEdit(item.id, 'name') }}
                       onDblDesc={(e) => { e.stopPropagation(); startEdit(item.id, 'desc') }}
+                      onDblWas={(e) => { e.stopPropagation(); startEdit(item.id, 'was') }}
+                      onDblNow={(e) => { e.stopPropagation(); startEdit(item.id, 'now') }}
+                      onDblBodyText={(e) => { e.stopPropagation(); startEdit(item.id, 'text') }}
                       onDragStart={() => set({ dragId: item.id })}
                       onDragEnter={() => reorder(item.id)}
                       onDragEnd={() => set({ dragId: null })}
                       onEditName={(v) => liveProduct(item.id, { name: v })}
                       onEditDesc={(v) => liveProduct(item.id, { desc: v })}
+                      onEditWas={(v) => liveProduct(item.id, { was: v })}
+                      onEditNow={(v) => liveProduct(item.id, { now: v })}
+                      onEditText={(v) => liveProduct(item.id, { text: v })}
                       onBlur={() => stopEdit()}
+                      onContextMenu={(e) => handleProductContextMenu(e, item)}
                     />
                   ))}
                 </div>
@@ -199,12 +268,19 @@ export default function Canvas() {
                           onSelect={(e) => { e.stopPropagation(); set({ selected: { type: 'product', id: item.id }, selectedFreeIds: [] }) }}
                           onDblName={(e) => { e.stopPropagation(); startEdit(item.id, 'name') }}
                           onDblDesc={(e) => { e.stopPropagation(); startEdit(item.id, 'desc') }}
+                          onDblWas={(e) => { e.stopPropagation(); startEdit(item.id, 'was') }}
+                          onDblNow={(e) => { e.stopPropagation(); startEdit(item.id, 'now') }}
+                          onDblBodyText={(e) => { e.stopPropagation(); startEdit(item.id, 'text') }}
                           onDragStart={() => set({ dragId: item.id })}
                           onDragEnter={() => reorder(item.id)}
                           onDragEnd={() => set({ dragId: null })}
                           onEditName={(v) => liveProduct(item.id, { name: v })}
                           onEditDesc={(v) => liveProduct(item.id, { desc: v })}
+                          onEditWas={(v) => liveProduct(item.id, { was: v })}
+                          onEditNow={(v) => liveProduct(item.id, { now: v })}
+                          onEditText={(v) => liveProduct(item.id, { text: v })}
                           onBlur={() => stopEdit()}
+                          onContextMenu={(e) => handleProductContextMenu(e, item)}
                         />
                       ))}
                       <div onClick={(e) => { e.stopPropagation(); addDealToPage(mp.id) }} title="Add a deal to this page" style={{ gridColumn: 'span 1', border: '2px dashed #D5CEC1', borderRadius: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 7, cursor: 'pointer', color: '#B7AE9E', minHeight: 0 }}>
@@ -220,6 +296,14 @@ export default function Canvas() {
           </div>
         </div>
       </div>
+      {ctxMenu && (
+        <ContextMenu
+          x={ctxMenu.x}
+          y={ctxMenu.y}
+          items={buildProductMenuItems(ctxMenu.item)}
+          onClose={() => setCtxMenu(null)}
+        />
+      )}
     </div>
   )
 }
@@ -233,15 +317,28 @@ interface ProductCellProps {
   onSelect: (e: React.MouseEvent) => void
   onDblName: (e: React.MouseEvent) => void
   onDblDesc: (e: React.MouseEvent) => void
+  onDblWas: (e: React.MouseEvent) => void
+  onDblNow: (e: React.MouseEvent) => void
+  onDblBodyText: (e: React.MouseEvent) => void
   onDragStart: () => void
   onDragEnter: () => void
   onDragEnd: () => void
   onEditName: (v: string) => void
   onEditDesc: (v: string) => void
+  onEditWas: (v: number) => void
+  onEditNow: (v: number) => void
+  onEditText: (v: string) => void
   onBlur: () => void
+  onContextMenu: (e: React.MouseEvent) => void
 }
 
-function ProductCell({ item, accent, badge, onSelect, onDblName, onDblDesc, onDragStart, onDragEnter, onDragEnd, onEditName, onEditDesc, onBlur }: ProductCellProps) {
+function ProductCell({
+  item, accent, badge: _badge, onSelect, onDblName, onDblDesc,
+  onDblWas, onDblNow, onDblBodyText,
+  onDragStart, onDragEnter, onDragEnd,
+  onEditName, onEditDesc, onEditWas, onEditNow, onEditText,
+  onBlur, onContextMenu
+}: ProductCellProps) {
   const focusRef = (el: HTMLInputElement | null) => {
     if (el) { el.focus(); try { const v = el.value; el.setSelectionRange(v.length, v.length) } catch (_) {} }
   }
@@ -250,6 +347,7 @@ function ProductCell({ item, accent, badge, onSelect, onDblName, onDblDesc, onDr
     <div
       onClick={onSelect}
       onDoubleClick={onDblName}
+      onContextMenu={onContextMenu}
       draggable={item.cellDraggable}
       onDragStart={onDragStart}
       onDragEnter={onDragEnter}
@@ -266,9 +364,28 @@ function ProductCell({ item, accent, badge, onSelect, onDblName, onDblDesc, onDr
             : <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 8, color: '#B7AE9E', letterSpacing: '1px' }}>{item.imgLabel}</span>
           }
           {item.showBadge && (
-            <div style={{ position: 'absolute', top: 6, right: 6, width: item.saveDim, height: item.saveDim, borderRadius: '50%', background: badge, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', lineHeight: 1, boxShadow: '0 2px 6px rgba(33,29,23,.2)' }}>
-              <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: item.saveLblF, color: '#211D17' }}>SAVE</span>
-              <span style={{ fontFamily: "'Anton', sans-serif", fontSize: item.savePctF, color: '#211D17' }}>{item.savePct}%</span>
+            <div style={{
+              position: 'absolute',
+              top: `${item.badgeY}px`,
+              right: `${item.badgeX}px`,
+              width: `${item.badgeSize}px`,
+              height: `${item.badgeSize}px`,
+              borderRadius: item.badgeShape === 'circle' ? '50%' : (item.badgeShape === 'rounded' ? '8px' : '0px'),
+              clipPath: item.badgeShape === 'star'
+                ? 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)'
+                : item.badgeShape === 'burst'
+                ? 'polygon(50% 0%, 58% 12%, 73% 7%, 75% 22%, 90% 21%, 86% 36%, 98% 43%, 89% 55%, 95% 70%, 82% 75%, 83% 90%, 69% 89%, 66% 99%, 52% 93%, 44% 99%, 33% 91%, 23% 94%, 18% 81%, 5% 78%, 10% 64%, 2% 52%, 12% 41%, 8% 26%, 22% 23%, 24% 8%, 38% 11%, 42% 1%)'
+                : 'none',
+              background: item.badgeBg,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              lineHeight: 1,
+              boxShadow: item.badgeShape === 'star' || item.badgeShape === 'burst' ? 'none' : '0 2px 6px rgba(33,29,23,.2)'
+            }}>
+              <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: Math.max(6, item.badgeSize * 0.2), color: '#211D17' }}>SAVE</span>
+              <span style={{ fontFamily: "'Anton', sans-serif", fontSize: Math.max(10, item.badgeSize * 0.35), color: '#211D17' }}>{item.savePct}%</span>
             </div>
           )}
           {item.hasTag && (
@@ -308,7 +425,19 @@ function ProductCell({ item, accent, badge, onSelect, onDblName, onDblDesc, onDr
           )
         )}
         {item.showText && (
-          <div style={{ fontSize: 10.5, color: item.descCol, marginBottom: 6, lineHeight: 1.4 }}>{item.textDisplay}</div>
+          item.isEditingText ? (
+            <input
+              ref={focusRef}
+              defaultValue={item.text}
+              onChange={(e) => onEditText(e.target.value)}
+              onBlur={onBlur}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === 'Escape') (e.target as HTMLInputElement).blur() }}
+              onClick={(e) => e.stopPropagation()}
+              style={{ fontFamily: 'inherit', fontSize: 10.5, marginBottom: 6, border: 'none', outline: `2px solid ${accent}`, borderRadius: 4, padding: '1px 3px', width: '100%', background: '#fff', color: '#211D17' }}
+            />
+          ) : (
+            <div onDoubleClick={onDblBodyText} style={{ fontSize: 10.5, color: item.descCol, marginBottom: 6, lineHeight: 1.4, cursor: 'text' }}>{item.textDisplay}</div>
+          )
         )}
         {item.showChips && (
           <div style={{ display: 'flex', gap: 5, margin: '5px 0 7px', flexWrap: 'wrap' }}>
@@ -318,21 +447,54 @@ function ProductCell({ item, accent, badge, onSelect, onDblName, onDblDesc, onDr
         )}
         {item.showPrice && (
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 7, justifyContent: item.justify, marginTop: 4 }}>
-            {item.showDiscountRow && <span style={{ fontSize: 11, color: item.strikeCol, textDecoration: 'line-through', paddingBottom: 4 }}>{item.wasText}</span>}
-            {item.pricePlaceholder && <div style={{ border: '1px dashed #CFC8BA', borderRadius: 7, padding: '3px 10px', fontFamily: "'Space Mono', monospace", fontSize: 10, color: '#B7AE9E', letterSpacing: '1px' }}>PRICE</div>}
-            {item.usePill && !item.pricePlaceholder && (
-              <div style={{ background: item.pillBg, color: item.pillText, borderRadius: 8, padding: '3px 9px 4px', display: 'flex', alignItems: 'baseline', gap: 1 }}>
-                <span style={{ fontSize: 10, fontWeight: 700, alignSelf: 'flex-start', marginTop: 2 }}>$</span>
-                <span style={{ fontFamily: "'Anton', sans-serif", fontSize: item.priceIntF, lineHeight: 0.9 }}>{item.nowInt}</span>
-                <span style={{ fontFamily: "'Anton', sans-serif", fontSize: item.priceCentF }}>{item.nowCents}</span>
-              </div>
+            {item.showDiscountRow && (
+              item.isEditingWas ? (
+                <input
+                  ref={focusRef}
+                  type="number"
+                  step="0.01"
+                  defaultValue={item.was}
+                  onChange={(e) => onEditWas(parseFloat(e.target.value) || 0)}
+                  onBlur={onBlur}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === 'Escape') (e.target as HTMLInputElement).blur() }}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ fontFamily: 'inherit', fontSize: 11, width: 55, border: 'none', outline: `2px solid ${accent}`, borderRadius: 4, padding: '1px 3px', background: '#fff', color: '#211D17' }}
+                />
+              ) : (
+                <span onDoubleClick={onDblWas} style={{ fontSize: 11, color: item.strikeCol, textDecoration: 'line-through', paddingBottom: 4, cursor: 'text' }}>{item.wasText}</span>
+              )
             )}
-            {item.plainPrice && !item.pricePlaceholder && (
-              <div style={{ color: accent, display: 'flex', alignItems: 'baseline', gap: 1 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, alignSelf: 'flex-start', marginTop: 2 }}>$</span>
-                <span style={{ fontFamily: "'Anton', sans-serif", fontSize: item.priceIntF, lineHeight: 0.9 }}>{item.nowInt}</span>
-                <span style={{ fontFamily: "'Anton', sans-serif", fontSize: item.priceCentF }}>{item.nowCents}</span>
-              </div>
+            {item.pricePlaceholder && <div style={{ border: '1px dashed #CFC8BA', borderRadius: 7, padding: '3px 10px', fontFamily: "'Space Mono', monospace", fontSize: 10, color: '#B7AE9E', letterSpacing: '1px' }}>PRICE</div>}
+            {!item.pricePlaceholder && (
+              item.isEditingNow ? (
+                <input
+                  ref={focusRef}
+                  type="number"
+                  step="0.01"
+                  defaultValue={item.now}
+                  onChange={(e) => onEditNow(parseFloat(e.target.value) || 0)}
+                  onBlur={onBlur}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === 'Escape') (e.target as HTMLInputElement).blur() }}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ fontFamily: 'inherit', fontSize: 14, fontWeight: 'bold', width: 55, border: 'none', outline: `2px solid ${accent}`, borderRadius: 4, padding: '1px 3px', background: '#fff', color: '#211D17' }}
+                />
+              ) : (
+                <div onDoubleClick={onDblNow} style={{ cursor: 'text' }}>
+                  {item.usePill ? (
+                    <div style={{ background: item.pillBg, color: item.pillText, borderRadius: 8, padding: '3px 9px 4px', display: 'flex', alignItems: 'baseline', gap: 1 }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, alignSelf: 'flex-start', marginTop: 2 }}>$</span>
+                      <span style={{ fontFamily: "'Anton', sans-serif", fontSize: item.priceIntF, lineHeight: 0.9 }}>{item.nowInt}</span>
+                      <span style={{ fontFamily: "'Anton', sans-serif", fontSize: item.priceCentF }}>{item.nowCents}</span>
+                    </div>
+                  ) : (
+                    <div style={{ color: accent, display: 'flex', alignItems: 'baseline', gap: 1 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, alignSelf: 'flex-start', marginTop: 2 }}>$</span>
+                      <span style={{ fontFamily: "'Anton', sans-serif", fontSize: item.priceIntF, lineHeight: 0.9 }}>{item.nowInt}</span>
+                      <span style={{ fontFamily: "'Anton', sans-serif", fontSize: item.priceCentF }}>{item.nowCents}</span>
+                    </div>
+                  )}
+                </div>
+              )
             )}
           </div>
         )}

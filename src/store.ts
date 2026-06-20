@@ -70,6 +70,8 @@ interface AppState {
   deleteProject: (id: string) => Promise<void>
   startProcessing: () => void
   loadCSV: (products: Product[]) => void
+  createImportedProject: (products: Product[], filename: string) => Promise<void>
+  createEmptyProject: () => Promise<void>
   addDeal: () => void
   addBlank: () => void
   addBlankPage: () => void
@@ -518,6 +520,68 @@ export const useStore = create<AppState>((set, get) => ({
       template: 'promo',
       gridKey: products.length > 18 ? '4x4' : products.length > 9 ? '3x3' : '2x2',
     })
+  },
+
+  createImportedProject: async (products, filename) => {
+    const s = get()
+    const user = s.user
+    const id = user ? String(Date.now()) : ('pr' + Date.now())
+    const projName = filename.replace(/\.[^/.]+$/, "") || 'My Catalog'
+    const np: Project = {
+      id, name: projName, store: 'YOUR STORE', accent: 'oklch(0.57 0.2 25)',
+      badge: '#F7CC3A', template: 'promo', gridKey: products.length > 18 ? '4x4' : products.length > 9 ? '3x3' : '2x2',
+      pageSize: 'a4', dealCount: products.length, updated: 'Just now',
+      headline1: 'WEEKEND', headline2: 'DEALS', burst: 'UP TO 60% OFF',
+    }
+    if (user) {
+      const { data } = await supabase.from('projects').insert({
+        user_id: user.id, name: np.name, store: np.store, accent: np.accent, badge: np.badge,
+        template: np.template, grid_key: np.gridKey, page_size: np.pageSize, orientation: 'portrait',
+        headline1: np.headline1, headline2: np.headline2, burst: np.burst, validity: 'VALID THIS WEEK',
+        products: products, manual_pages: [], page_grids: {}, banners: DEFAULT_BANNERS,
+        cover: { brand: np.store, headline1: np.headline1, headline2: np.headline2, burst: np.burst, validity: 'VALID THIS WEEK' },
+        catalog_name: np.name,
+      }).select().single()
+      if (data) np.id = data.id
+    }
+    set((state) => ({
+      screen: 'editor', activeProjectId: np.id, projects: [np, ...state.projects],
+      products, manualPages: [], pageGrids: {}, catalogName: np.name,
+      accentKey: 'custom', customAccent: np.accent, badge: np.badge, template: 'promo', gridKey: np.gridKey,
+      pageSize: 'a4', orientation: 'portrait',
+      cover: { brand: np.store, headline1: np.headline1, headline2: np.headline2, burst: np.burst, validity: 'VALID THIS WEEK' },
+      banners: JSON.parse(JSON.stringify(DEFAULT_BANNERS)), selected: null, editingId: null, history: [], future: [], leftTab: 'deals',
+    }))
+  },
+
+  createEmptyProject: async () => {
+    const s = get()
+    const user = s.user
+    const id = user ? String(Date.now()) : ('pr' + Date.now())
+    const np: Project = {
+      id, name: 'Untitled catalog', store: 'YOUR STORE', accent: 'oklch(0.57 0.2 25)',
+      badge: '#F7CC3A', template: 'promo', gridKey: '3x3', pageSize: 'a4',
+      dealCount: 0, updated: 'Just now', headline1: 'WEEKEND', headline2: 'DEALS', burst: 'UP TO 60% OFF',
+    }
+    if (user) {
+      const { data } = await supabase.from('projects').insert({
+        user_id: user.id, name: np.name, store: np.store, accent: np.accent, badge: np.badge,
+        template: np.template, grid_key: np.gridKey, page_size: np.pageSize, orientation: 'portrait',
+        headline1: np.headline1, headline2: np.headline2, burst: np.burst, validity: 'VALID THIS WEEK',
+        products: [], manual_pages: [], page_grids: {}, banners: DEFAULT_BANNERS,
+        cover: { brand: np.store, headline1: np.headline1, headline2: np.headline2, burst: np.burst, validity: 'VALID THIS WEEK' },
+        catalog_name: np.name,
+      }).select().single()
+      if (data) np.id = data.id
+    }
+    set((state) => ({
+      screen: 'editor', activeProjectId: np.id, projects: [np, ...state.projects],
+      products: [], manualPages: [], pageGrids: {}, catalogName: np.name,
+      accentKey: 'custom', customAccent: np.accent, badge: np.badge, template: 'promo', gridKey: '3x3',
+      pageSize: 'a4', orientation: 'portrait',
+      cover: { brand: np.store, headline1: np.headline1, headline2: np.headline2, burst: np.burst, validity: 'VALID THIS WEEK' },
+      banners: JSON.parse(JSON.stringify(DEFAULT_BANNERS)), selected: null, editingId: null, history: [], future: [], leftTab: 'deals',
+    }))
   },
 
   addFreeEl: (pageKey, el) => {

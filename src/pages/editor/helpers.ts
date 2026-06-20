@@ -130,6 +130,14 @@ export interface EnrichedProduct extends Product {
   savePctF: number
   priceIntF: number
   priceCentF: number
+  badgeBg: string
+  badgeShape: 'circle' | 'square' | 'rounded' | 'star' | 'burst'
+  badgeSize: number
+  badgeX: number
+  badgeY: number
+  isEditingWas: boolean
+  isEditingNow: boolean
+  isEditingText: boolean
 }
 
 export function stripeBg() {
@@ -216,8 +224,17 @@ export function enrichItem(
   const editing = editingId?.id === p.id
   const editingName = !!editing && editingId?.field === 'name'
   const editingDesc = !!editing && editingId?.field === 'desc'
+  const editingWas = !!editing && editingId?.field === 'was'
+  const editingNow = !!editing && editingId?.field === 'now'
+  const editingText = !!editing && editingId?.field === 'text'
   const placeholderCol = invert ? 'rgba(255,255,255,.55)' : '#C2BBA8'
   const showDescField = (p.showDesc !== false) && !small
+
+  const badgeBg = ov.badgeBg ?? _badge
+  const badgeShape = ov.badgeShape ?? 'circle'
+  const badgeSize = ov.badgeSize ?? saveDim
+  const badgeX = ov.badgeX ?? 6
+  const badgeY = ov.badgeY ?? 6
 
   return {
     ...p, index, num: String(index + 1).padStart(2, '0'),
@@ -239,6 +256,7 @@ export function enrichItem(
     nameColor: hasName ? 'inherit' : placeholderCol,
     isEditingName: editingName, notEditingName: !editingName,
     isEditingDesc: editingDesc, notEditingDesc: !editingDesc,
+    isEditingWas: editingWas, isEditingNow: editingNow, isEditingText: editingText,
     descDisplay: hasDesc ? p.desc : 'Add a description',
     descColShown: hasDesc ? descCol : placeholderCol,
     showDesc: showDescField,
@@ -255,5 +273,6 @@ export function enrichItem(
     cellDraggable: !editing,
     dragOpacity: p.id === dragId ? '0.45' : '1',
     nameF, saveDim, saveLblF, savePctF, priceIntF, priceCentF,
+    badgeBg, badgeShape, badgeSize, badgeX, badgeY,
   }
 }
