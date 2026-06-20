@@ -1,13 +1,16 @@
 import { useStore } from '../../store'
 import { useShallow } from 'zustand/react/shallow'
 import { computeAccent, computePageDimensions, gridTokens } from './helpers'
+import { COMPONENT_TEMPLATES, COMPONENT_CATEGORIES, ACCENT_PLACEHOLDER, type ComponentTemplate } from './componentDefs'
+import type { FreeElement } from '../../types'
 
 export default function LeftPanel() {
   const {
     leftTab, products, manualPages, gridKey, pageSize, orientation, template,
     selected, dragId, pageDragId, banners,
     accentKey, customAccent,
-    set, addDeal, addBlank, addBlankPage, removeManualPage, reorder, reorderManualPages,
+    activePageKey, pageElements,
+    set, addDeal, addBlank, addBlankPage, removeManualPage, reorder, reorderManualPages, addFreeEl,
   } = useStore(useShallow((s) => ({
     leftTab: s.leftTab, products: s.products, manualPages: s.manualPages,
     gridKey: s.gridKey, pageSize: s.pageSize,
@@ -15,8 +18,10 @@ export default function LeftPanel() {
     selected: s.selected, dragId: s.dragId, pageDragId: s.pageDragId,
     banners: s.banners,
     accentKey: s.accentKey, customAccent: s.customAccent,
+    activePageKey: s.activePageKey, pageElements: s.pageElements,
     set: s.set, addDeal: s.addDeal, addBlank: s.addBlank, addBlankPage: s.addBlankPage,
     removeManualPage: s.removeManualPage, reorder: s.reorder, reorderManualPages: s.reorderManualPages,
+    addFreeEl: s.addFreeEl,
   })))
 
   const ac = computeAccent(accentKey, customAccent)
@@ -41,21 +46,46 @@ export default function LeftPanel() {
   const segOn = { bg: '#fff', fg: '#211D17' }
   const segOff = { bg: 'transparent', fg: '#9A9182' }
 
+  const activePageLabel =
+    activePageKey === 'cover' ? 'Cover Page'
+    : activePageKey.startsWith('pg-') ? `Page ${parseInt(activePageKey.slice(3)) + 2}`
+    : (() => {
+        const mp = manualPages.find((m) => m.id === activePageKey.slice(3))
+        return mp ? (mp.title || 'Custom Page') : 'Custom Page'
+      })()
+
+  const handleAddComponent = (comp: ComponentTemplate) => {
+    const fill = comp.el.fill === ACCENT_PLACEHOLDER ? accent : comp.el.fill
+    const el: FreeElement = {
+      ...comp.el,
+      fill,
+      id: 'fe' + Date.now(),
+      zIndex: (pageElements[activePageKey]?.length ?? 0) + 1,
+    }
+    addFreeEl(activePageKey, el)
+  }
+
   return (
     <div style={{ width: 288, flex: 'none', borderRight: '1px solid #EAE6DD', background: '#FBF9F4', display: 'flex', flexDirection: 'column' }}>
       {/* Tab bar */}
-      <div style={{ display: 'flex', gap: 4, padding: '12px 12px 0' }}>
+      <div style={{ display: 'flex', gap: 3, padding: '12px 10px 0' }}>
         <button
           onClick={() => set({ leftTab: 'deals' })}
-          style={{ flex: 1, border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 700, padding: 9, borderRadius: '9px 9px 0 0', background: leftTab === 'deals' ? segOn.bg : segOff.bg, color: leftTab === 'deals' ? segOn.fg : segOff.fg }}
+          style={{ flex: 1, border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: 700, padding: '8px 4px', borderRadius: '9px 9px 0 0', background: leftTab === 'deals' ? segOn.bg : segOff.bg, color: leftTab === 'deals' ? segOn.fg : segOff.fg }}
         >
           Deals
         </button>
         <button
           onClick={() => set({ leftTab: 'pages' })}
-          style={{ flex: 1, border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 700, padding: 9, borderRadius: '9px 9px 0 0', background: leftTab === 'pages' ? segOn.bg : segOff.bg, color: leftTab === 'pages' ? segOn.fg : segOff.fg }}
+          style={{ flex: 1, border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: 700, padding: '8px 4px', borderRadius: '9px 9px 0 0', background: leftTab === 'pages' ? segOn.bg : segOff.bg, color: leftTab === 'pages' ? segOn.fg : segOff.fg }}
         >
           Pages
+        </button>
+        <button
+          onClick={() => set({ leftTab: 'elements' })}
+          style={{ flex: 1, border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: 700, padding: '8px 4px', borderRadius: '9px 9px 0 0', background: leftTab === 'elements' ? segOn.bg : segOff.bg, color: leftTab === 'elements' ? segOn.fg : segOff.fg }}
+        >
+          Design
         </button>
       </div>
 
@@ -164,6 +194,44 @@ export default function LeftPanel() {
           ))}
         </div>
       )}
+
+      {/* DESIGN TAB */}
+      {leftTab === 'elements' && (
+        <div className="sp-scroll" style={{ flex: 1, overflow: 'auto', padding: '14px 14px' }}>
+
+          {/* Active page indicator */}
+          <div style={{ background: '#fff', border: '1px solid #E8E2D6', borderRadius: 10, padding: '9px 12px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: accent, flex: 'none' }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#211D17' }}>Adding to: {activePageLabel}</div>
+              <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 9, color: '#9A9182', letterSpacing: '0.3px', marginTop: 1 }}>Click a page to switch target</div>
+            </div>
+          </div>
+
+          {/* Component categories */}
+          {COMPONENT_CATEGORIES.map((cat) => {
+            const comps = COMPONENT_TEMPLATES.filter((c) => c.category === cat)
+            return (
+              <div key={cat} style={{ marginBottom: 20 }}>
+                <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, color: '#B7AE9E', letterSpacing: '1.2px', marginBottom: 9 }}>{cat.toUpperCase()}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
+                  {comps.map((comp) => (
+                    <div
+                      key={comp.id}
+                      onClick={() => handleAddComponent(comp)}
+                      style={{ background: '#fff', border: '1px solid #E8E2D6', borderRadius: 10, padding: '9px 9px 8px', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 5 }}
+                    >
+                      <ComponentPreview comp={comp} accent={accent} />
+                      <div style={{ fontSize: 11.5, fontWeight: 700, color: '#211D17', lineHeight: 1.2 }}>{comp.label}</div>
+                      <div style={{ fontSize: 10, color: '#9A9182', lineHeight: 1.3 }}>{comp.hint}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
@@ -208,5 +276,77 @@ function PageNavItem({ label, pageNo, isCover, isManual, draggable, dragOpacity,
         <button onClick={onDelete} title="Delete page" style={{ border: 'none', background: '#F0ECE3', cursor: 'pointer', width: 24, height: 24, borderRadius: 7, color: '#9A9182', fontSize: 12, flex: 'none' }}>✕</button>
       )}
     </div>
+  )
+}
+
+function ComponentPreview({ comp, accent }: { comp: ComponentTemplate; accent: string }) {
+  const fill = comp.el.fill === ACCENT_PLACEHOLDER ? accent : comp.el.fill
+  const isCircle = comp.el.type === 'badge' || comp.el.type === 'sticker' || comp.el.type === 'ellipse'
+  const isDivider = comp.id === 'divider'
+
+  if (isDivider) {
+    return (
+      <div style={{ width: '100%', height: 40, display: 'flex', alignItems: 'center', paddingLeft: 4, paddingRight: 4 }}>
+        <div style={{ width: '100%', height: 2, background: '#CFC8BA', borderRadius: 1 }} />
+      </div>
+    )
+  }
+
+  if (comp.el.type === 'image') {
+    return (
+      <div style={{ width: '100%', height: 40, borderRadius: 6, background: '#F0ECE3', border: '1px dashed #CFC8BA', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 2 }}>
+        <span style={{ fontSize: 14, color: '#B7AE9E' }}>⊞</span>
+      </div>
+    )
+  }
+
+  if (isCircle) {
+    const stroke = comp.el.stroke !== 'none' ? `${comp.el.strokeW}px solid ${comp.el.stroke === '#fff' ? '#fff' : comp.el.stroke}` : 'none'
+    return (
+      <div style={{ width: 40, height: 40, borderRadius: '50%', background: fill, border: stroke, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', alignSelf: 'center', boxShadow: '0 1px 4px rgba(33,29,23,.15)' }}>
+        <div style={{ fontFamily: "'Anton', sans-serif", fontSize: comp.el.type === 'sticker' ? 13 : 11, color: comp.el.fontColor, lineHeight: 0.95 }}>{comp.el.text}</div>
+        {comp.el.text2 && <div style={{ fontSize: 7, fontWeight: 700, color: comp.el.fontColor, letterSpacing: '0.5px' }}>{comp.el.text2}</div>}
+      </div>
+    )
+  }
+
+  if (comp.el.type === 'brand-header') {
+    return (
+      <div style={{ width: '100%', height: 40, borderRadius: 6, background: fill, display: 'flex', alignItems: 'center', paddingLeft: 8, overflow: 'hidden' }}>
+        <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 10, color: comp.el.fontColor, letterSpacing: '0.5px' }}>{comp.el.text}</div>
+      </div>
+    )
+  }
+
+  if (comp.el.type === 'promo-band') {
+    return (
+      <div style={{ width: '100%', height: 40, borderRadius: 6, background: fill, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+        <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 10, color: comp.el.fontColor, letterSpacing: '0.5px', transform: 'skewX(-4deg)' }}>{comp.el.text}</div>
+        {comp.el.text2 && <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 7, color: comp.el.fontColor, opacity: 0.85 }}>{comp.el.text2}</div>}
+      </div>
+    )
+  }
+
+  if (comp.el.type === 'price-tag') {
+    return (
+      <div style={{ width: '100%', height: 40, borderRadius: 6, background: comp.el.fill, border: `1px solid #211D17`, display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: 7, overflow: 'hidden' }}>
+        <div style={{ fontSize: 7, color: '#9A9182', textDecoration: 'line-through' }}>{comp.el.text2}</div>
+        <div style={{ fontFamily: "'Anton', sans-serif", fontSize: 13, color: '#211D17', lineHeight: 0.95 }}>{comp.el.text3} {comp.el.text}</div>
+      </div>
+    )
+  }
+
+  if (comp.el.type === 'text') {
+    const lines = comp.el.fontSize >= 30 ? 1 : 2
+    return (
+      <div style={{ width: '100%', height: 40, borderRadius: 6, background: '#F8F6F2', display: 'flex', alignItems: 'center', paddingLeft: 6, paddingRight: 4, overflow: 'hidden' }}>
+        <div style={{ fontSize: comp.el.fontSize >= 30 ? 11 : 9, fontWeight: comp.el.bold ? 700 : 400, color: '#211D17', fontStyle: comp.el.italic ? 'italic' : 'normal', lineHeight: 1.35, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: lines, WebkitBoxOrient: 'vertical' as const }}>{comp.el.text}</div>
+      </div>
+    )
+  }
+
+  // rect / ellipse / default
+  return (
+    <div style={{ width: '100%', height: 40, borderRadius: comp.el.type === 'ellipse' ? '50%' : 6, background: fill, border: comp.el.stroke !== 'none' ? `1px solid ${comp.el.stroke}` : '1px solid #E4DFD5' }} />
   )
 }

@@ -177,6 +177,76 @@ export default function FreeLayer({ pageKey, pageW, pageH, accent }: Props) {
           )
         }
 
+        if (el.type === 'brand-header') {
+          return (
+            <div key={el.id}
+              style={{ ...base, background: el.fill, display: 'flex', alignItems: 'center', padding: '0 5%', gap: '3%' }}
+              onPointerDown={(e) => onElDown(e, el)} onPointerMove={(e) => onElMove(e, el)} onPointerUp={onElUp}
+            >
+              <div style={{ lineHeight: 1.1, pointerEvents: 'none' }}>
+                <div style={{ fontFamily: "'Anton', sans-serif", fontSize: el.fontSize, color: el.fontColor, letterSpacing: '1px', lineHeight: 0.95 }}>{el.text || 'BRAND NAME'}</div>
+                {el.text2 && <div style={{ fontFamily: "'Space Mono', monospace", fontSize: Math.max(8, el.fontSize * 0.3), color: el.fontColor, opacity: 0.8, letterSpacing: '2px', marginTop: 3 }}>{el.text2}</div>}
+              </div>
+            </div>
+          )
+        }
+
+        if (el.type === 'promo-band') {
+          return (
+            <div key={el.id}
+              style={{ ...base, background: el.fill, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '0 4%' }}
+              onPointerDown={(e) => onElDown(e, el)} onPointerMove={(e) => onElMove(e, el)} onPointerUp={onElUp}
+            >
+              <div style={{ fontFamily: "'Anton', sans-serif", fontSize: el.fontSize, color: el.fontColor, letterSpacing: '1px', transform: 'skewX(-5deg)', lineHeight: 0.9, pointerEvents: 'none' }}>{el.text || 'PROMO HEADLINE'}</div>
+              {el.text2 && <div style={{ fontFamily: "'Anton', sans-serif", fontSize: Math.max(8, el.fontSize * 0.52), color: el.fontColor, letterSpacing: '2px', marginTop: '2%', opacity: 0.92, pointerEvents: 'none' }}>{el.text2}</div>}
+              {el.text3 && <div style={{ fontFamily: "'Space Mono', monospace", fontSize: Math.max(7, el.fontSize * 0.24), color: el.fontColor, letterSpacing: '3px', marginTop: '2%', opacity: 0.7, pointerEvents: 'none' }}>{el.text3}</div>}
+            </div>
+          )
+        }
+
+        if (el.type === 'badge') {
+          return (
+            <div key={el.id}
+              style={{ ...base, background: el.fill, borderRadius: '50%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', lineHeight: 1, boxShadow: '0 2px 10px rgba(33,29,23,.22)' }}
+              onPointerDown={(e) => onElDown(e, el)} onPointerMove={(e) => onElMove(e, el)} onPointerUp={onElUp}
+            >
+              {el.text3 && <div style={{ fontSize: Math.max(7, el.fontSize * 0.22), fontWeight: 800, color: el.fontColor, fontFamily: "'Hanken Grotesk', sans-serif", letterSpacing: '2px', pointerEvents: 'none' }}>{el.text3}</div>}
+              <div style={{ display: 'flex', alignItems: 'flex-start', pointerEvents: 'none' }}>
+                <span style={{ fontFamily: "'Anton', sans-serif", fontSize: el.fontSize, color: el.fontColor, lineHeight: 0.9 }}>{el.text || '50'}</span>
+                <span style={{ fontFamily: "'Anton', sans-serif", fontSize: Math.max(8, el.fontSize * 0.42), color: el.fontColor, marginTop: '6%', lineHeight: 0.9 }}>{el.text2 || '%'}</span>
+              </div>
+              <div style={{ fontSize: Math.max(6, el.fontSize * 0.2), fontWeight: 700, color: el.fontColor, fontFamily: "'Hanken Grotesk', sans-serif", letterSpacing: '2px', pointerEvents: 'none' }}>OFF</div>
+            </div>
+          )
+        }
+
+        if (el.type === 'sticker') {
+          return (
+            <div key={el.id}
+              style={{ ...base, background: el.fill, borderRadius: '50%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', lineHeight: 1.1, boxShadow: '0 2px 10px rgba(33,29,23,.22)', border: el.stroke !== 'none' ? `${el.strokeW}px solid ${el.stroke}` : 'none' }}
+              onPointerDown={(e) => onElDown(e, el)} onPointerMove={(e) => onElMove(e, el)} onPointerUp={onElUp}
+            >
+              <div style={{ fontFamily: "'Anton', sans-serif", fontSize: el.fontSize, color: el.fontColor, lineHeight: 0.95, pointerEvents: 'none' }}>{el.text || '800'}</div>
+              {el.text2 && <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: Math.max(7, el.fontSize * 0.28), fontWeight: 700, color: el.fontColor, letterSpacing: '2px', pointerEvents: 'none' }}>{el.text2}</div>}
+            </div>
+          )
+        }
+
+        if (el.type === 'price-tag') {
+          return (
+            <div key={el.id}
+              style={{ ...base, background: el.fill, border: el.stroke !== 'none' ? `${el.strokeW}px solid ${el.stroke}` : 'none', borderRadius: 8, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 6%' }}
+              onPointerDown={(e) => onElDown(e, el)} onPointerMove={(e) => onElMove(e, el)} onPointerUp={onElUp}
+            >
+              {el.text2 && <div style={{ fontFamily: "'Space Mono', monospace", fontSize: Math.max(7, el.fontSize * 0.18), color: el.fontColor, opacity: 0.5, textDecoration: 'line-through', letterSpacing: '1px', pointerEvents: 'none' }}>{el.text2}</div>}
+              <div style={{ display: 'flex', alignItems: 'flex-start', lineHeight: 0.9, pointerEvents: 'none' }}>
+                {el.text3 && <span style={{ fontFamily: "'Anton', sans-serif", fontSize: Math.max(8, el.fontSize * 0.3), color: el.fontColor, marginTop: '4%' }}>{el.text3}</span>}
+                <span style={{ fontFamily: "'Anton', sans-serif", fontSize: el.fontSize, color: el.fontColor, lineHeight: 0.9 }}>{el.text || '0.00'}</span>
+              </div>
+            </div>
+          )
+        }
+
         // text
         const isEditing = editingId === el.id
         return (

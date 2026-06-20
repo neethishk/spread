@@ -102,7 +102,7 @@ export default function Canvas() {
             {/* COVER PAGE */}
             <div
               id="sp-cover"
-              onClick={(e) => { e.stopPropagation(); set({ selected: { type: 'cover' }, selectedFreeIds: [] }) }}
+              onClick={(e) => { e.stopPropagation(); set({ selected: { type: 'cover' }, selectedFreeIds: [], activePageKey: 'cover' }) }}
               style={{ position: 'relative', width: pageW, height: pageH, background: '#fff', borderRadius: 4, boxShadow: coverRing, overflow: 'hidden', marginBottom: 26, cursor: 'pointer', display: 'flex', flexDirection: 'column' }}
             >
               <div style={{ flex: 1, background: accent, color: '#fff', padding: '7% 8% 8%', position: 'relative', display: 'flex', flexDirection: 'column' }}>
@@ -132,6 +132,7 @@ export default function Canvas() {
               <div
                 key={pgI}
                 id={`sp-pg-${pgI}`}
+                onClick={() => set({ activePageKey: `pg-${pgI}` })}
                 style={{ position: 'relative', width: pageW, height: pageH, background: '#fff', borderRadius: 4, boxShadow: '0 10px 30px rgba(33,29,23,.12)', overflow: 'hidden', marginBottom: 26, display: 'flex', flexDirection: 'column' }}
               >
                 {showGuides && (
@@ -186,6 +187,7 @@ export default function Canvas() {
                 <div
                   key={mp.id}
                   id={`sp-mp-${mp.id}`}
+                  onClick={() => set({ activePageKey: `mp-${mp.id}` })}
                   style={{ position: 'relative', width: pageW, height: pageH, background: '#fff', borderRadius: 4, boxShadow: '0 10px 30px rgba(33,29,23,.12)', overflow: 'hidden', marginBottom: 26, display: 'flex', flexDirection: 'column' }}
                 >
                   <div style={{ flex: 'none', background: accent, color: '#fff', padding: '9px 12px 9px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

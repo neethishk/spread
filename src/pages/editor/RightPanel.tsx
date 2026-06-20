@@ -481,6 +481,52 @@ export default function RightPanel() {
                 </div>
               </div>
 
+              {/* Compound element inspector (brand-header, promo-band, badge, sticker, price-tag) */}
+              {(fe.type === 'brand-header' || fe.type === 'promo-band' || fe.type === 'badge' || fe.type === 'sticker' || fe.type === 'price-tag') && (
+                <div>
+                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: '1.5px', color: '#9A9182', marginBottom: 10 }}>STYLE</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: '#6B645A', flex: 1 }}>Background</label>
+                    <label style={{ position: 'relative', width: 34, height: 34, flex: 'none', borderRadius: 9, overflow: 'hidden', cursor: 'pointer', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.1)' }}>
+                      <span style={{ position: 'absolute', inset: 0, background: fe.fill }} />
+                      <input type="color" value={fe.fill === 'transparent' ? '#ffffff' : fe.fill} onChange={(e) => upd({ fill: e.target.value })} style={{ position: 'absolute', top: -6, left: -6, width: 48, height: 48, border: 'none', padding: 0, cursor: 'pointer', opacity: 0 }} />
+                    </label>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: '#6B645A', flex: 1 }}>Text color</label>
+                    <label style={{ position: 'relative', width: 34, height: 34, flex: 'none', borderRadius: 9, overflow: 'hidden', cursor: 'pointer', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.1)' }}>
+                      <span style={{ position: 'absolute', inset: 0, background: fe.fontColor }} />
+                      <input type="color" value={fe.fontColor} onChange={(e) => upd({ fontColor: e.target.value })} style={{ position: 'absolute', top: -6, left: -6, width: 48, height: 48, border: 'none', padding: 0, cursor: 'pointer', opacity: 0 }} />
+                    </label>
+                  </div>
+
+                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: '1.5px', color: '#9A9182', marginBottom: 10 }}>CONTENT</div>
+                  <label style={{ fontSize: 11.5, fontWeight: 700, color: '#6B645A', display: 'block', marginBottom: 6 }}>
+                    {fe.type === 'badge' ? 'Number' : fe.type === 'price-tag' ? 'Price' : 'Main text'}
+                  </label>
+                  <input className="sp-in" value={fe.text} onChange={(e) => upd({ text: e.target.value })} />
+
+                  <label style={{ fontSize: 11.5, fontWeight: 700, color: '#6B645A', display: 'block', margin: '10px 0 6px' }}>
+                    {fe.type === 'badge' ? 'Symbol' : fe.type === 'price-tag' ? 'Was price' : fe.type === 'sticker' ? 'Label' : 'Subtitle'}
+                  </label>
+                  <input className="sp-in" value={fe.text2 ?? ''} onChange={(e) => upd({ text2: e.target.value })} />
+
+                  {(fe.type === 'promo-band' || fe.type === 'badge' || fe.type === 'brand-header' || fe.type === 'price-tag') && (
+                    <>
+                      <label style={{ fontSize: 11.5, fontWeight: 700, color: '#6B645A', display: 'block', margin: '10px 0 6px' }}>
+                        {fe.type === 'badge' ? 'Top label' : fe.type === 'price-tag' ? 'Currency' : fe.type === 'brand-header' ? 'Tagline' : 'Small print'}
+                      </label>
+                      <input className="sp-in" value={fe.text3 ?? ''} onChange={(e) => upd({ text3: e.target.value })} />
+                    </>
+                  )}
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14 }}>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: '#6B645A', flex: 1 }}>Font size</label>
+                    <input type="number" min={10} max={200} value={fe.fontSize} onChange={(e) => upd({ fontSize: parseInt(e.target.value) || 20 })} style={{ width: 64, padding: '7px 9px', border: '1px solid #E2DCD0', borderRadius: 9, fontFamily: 'inherit', fontSize: 12, color: '#211D17', outline: 'none' }} />
+                  </div>
+                </div>
+              )}
+
               {/* Fill & Stroke */}
               {(fe.type === 'rect' || fe.type === 'ellipse') && (
                 <div>

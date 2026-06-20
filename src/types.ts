@@ -1,6 +1,6 @@
 export interface FreeElement {
   id: string
-  type: 'text' | 'image' | 'rect' | 'ellipse'
+  type: 'text' | 'image' | 'rect' | 'ellipse' | 'badge' | 'promo-band' | 'brand-header' | 'sticker' | 'price-tag'
   x: number       // % of page width
   y: number       // % of page height
   w: number       // % of page width
@@ -10,6 +10,8 @@ export interface FreeElement {
   strokeW: number
   opacity: number
   text: string
+  text2?: string
+  text3?: string
   fontSize: number
   bold: boolean
   italic: boolean

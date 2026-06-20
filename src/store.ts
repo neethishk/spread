@@ -41,7 +41,8 @@ interface AppState {
   pageDragId: string | null
   tool: string
   zoom: number
-  leftTab: 'deals' | 'pages'
+  leftTab: 'deals' | 'pages' | 'elements'
+  activePageKey: string
   showRulers: boolean
   showGuides: boolean
   history: HistorySnap[]
@@ -131,6 +132,7 @@ export const useStore = create<AppState>((set, get) => ({
   tool: 'select',
   zoom: 1,
   leftTab: 'deals',
+  activePageKey: 'cover',
   showRulers: true,
   showGuides: true,
   history: [],
@@ -519,6 +521,8 @@ export const useStore = create<AppState>((set, get) => ({
       pageElements: { ...s.pageElements, [pageKey]: [...(s.pageElements[pageKey] ?? []), el] },
       selectedFreeIds: [el.id],
       freeElPageKey: pageKey,
+      activePageKey: pageKey,
+      tool: 'select',
     }))
   },
 
