@@ -95,10 +95,13 @@ interface AppState {
   generateExport: () => Promise<void>
   addFreeEl: (pageKey: string, el: FreeElement) => void
   updateFreeEl: (pageKey: string, id: string, patch: Partial<FreeElement>) => void
+  moveFreeEls: (pageKey: string, moves: { id: string; x: number; y: number }[]) => void
   deleteFreeEls: (pageKey: string, ids: string[]) => void
   duplicateFreeEl: (pageKey: string, id: string) => void
   groupFreeEls: (pageKey: string, ids: string[]) => void
   ungroupFreeEls: (pageKey: string, groupId: string) => void
+  setFreeElZIndex: (pageKey: string, id: string, dir: 'forward' | 'backward' | 'front' | 'back') => void
+  toggleFreeElLock: (pageKey: string, id: string) => void
   set: (patch: Partial<AppState>) => void
 }
 
@@ -547,6 +550,18 @@ export const useStore = create<AppState>((set, get) => ({
     }))
   },
 
+  moveFreeEls: (pageKey, moves) => {
+    set((s) => ({
+      pageElements: {
+        ...s.pageElements,
+        [pageKey]: (s.pageElements[pageKey] ?? []).map((e) => {
+          const m = moves.find((mv) => mv.id === e.id)
+          return m ? { ...e, x: m.x, y: m.y } : e
+        }),
+      },
+    }))
+  },
+
   duplicateFreeEl: (pageKey, id) => {
     set((s) => {
       const els = s.pageElements[pageKey] ?? []
@@ -576,6 +591,33 @@ export const useStore = create<AppState>((set, get) => ({
         ...s.pageElements,
         [pageKey]: (s.pageElements[pageKey] ?? []).map((e) => e.groupId === groupId ? { ...e, groupId: null } : e),
       },
+    }))
+  },
+
+  setFreeElZIndex: (pageKey, id, dir) => {
+    set((s) => {
+      const els = s.pageElements[pageKey] ?? []
+      const sorted = [...els].sort((a, b) => a.zIndex - b.zIndex)
+      const cur = sorted.find((e) => e.id === id)
+      if (!cur) return {}
+      let newZ = cur.zIndex
+      if (dir === 'front') newZ = sorted.length + 1
+      else if (dir === 'back') newZ = 0
+      else if (dir === 'forward') { const next = sorted.find((e) => e.zIndex > cur.zIndex); if (next) newZ = next.zIndex + 0.5 }
+      else { const prev = [...sorted].reverse().find((e) => e.zIndex < cur.zIndex); if (prev) newZ = prev.zIndex - 0.5 }
+      const updated = els.map((e) => e.id === id ? { ...e, zIndex: newZ } : e)
+      const renorm = [...updated].sort((a, b) => a.zIndex - b.zIndex).map((e, i) => ({ ...e, zIndex: i + 1 }))
+      return { pageElements: { ...s.pageElements, [pageKey]: renorm } }
+    })
+  },
+
+  toggleFreeElLock: (pageKey, id) => {
+    set((s) => ({
+      pageElements: {
+        ...s.pageElements,
+        [pageKey]: (s.pageElements[pageKey] ?? []).map((e) => e.id === id ? { ...e, locked: !e.locked } : e),
+      },
+      selectedFreeIds: s.selectedFreeIds.filter((sid) => sid !== id),
     }))
   },
 

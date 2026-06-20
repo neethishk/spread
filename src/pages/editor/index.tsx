@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { useStore } from '../../store'
 import { useShallow } from 'zustand/react/shallow'
 import { computeAccent, computePageDimensions, gridTokens } from './helpers'
-import { TOOL_DEFS, ZOOMS } from '../../constants'
+import { ZOOMS } from '../../constants'
 import LeftPanel from './LeftPanel'
 import Canvas from './Canvas'
 import RightPanel from './RightPanel'
@@ -11,19 +11,20 @@ import ContextBar from './ContextBar'
 
 export default function Editor() {
   const {
-    tool, zoom, showRulers, showGuides, catalogName,
+    zoom, showRulers, showGuides, catalogName,
     products, manualPages, pageSize, orientation, gridKey, template,
     accentKey, customAccent, selected, history, future,
     set, zoomStep, undo, redo, goProjects,
-    selectedFreeIds, freeElPageKey, deleteFreeEls,
+    selectedFreeIds, freeElPageKey, pageElements, deleteFreeEls, moveFreeEls,
   } = useStore(useShallow((s) => ({
-    tool: s.tool, zoom: s.zoom, showRulers: s.showRulers, showGuides: s.showGuides,
+    zoom: s.zoom, showRulers: s.showRulers, showGuides: s.showGuides,
     catalogName: s.catalogName, products: s.products, manualPages: s.manualPages,
     pageSize: s.pageSize, orientation: s.orientation,
     gridKey: s.gridKey, template: s.template, accentKey: s.accentKey,
     customAccent: s.customAccent, selected: s.selected, history: s.history, future: s.future,
     set: s.set, zoomStep: s.zoomStep, undo: s.undo, redo: s.redo, goProjects: s.goProjects,
-    selectedFreeIds: s.selectedFreeIds, freeElPageKey: s.freeElPageKey, deleteFreeEls: s.deleteFreeEls,
+    selectedFreeIds: s.selectedFreeIds, freeElPageKey: s.freeElPageKey,
+    pageElements: s.pageElements, deleteFreeEls: s.deleteFreeEls, moveFreeEls: s.moveFreeEls,
   })))
 
   const ac = computeAccent(accentKey, customAccent)
@@ -64,18 +65,39 @@ export default function Editor() {
       if (e.ctrlKey || e.metaKey) {
         if (e.key === 'z' && !e.shiftKey) { undo(); return }
         if ((e.key === 'z' && e.shiftKey) || e.key === 'y') { redo(); return }
+        if (e.key === 'd' && freeElPageKey && selectedFreeIds.length > 0) {
+          e.preventDefault()
+          // duplicate handled by ContextBar/ContextMenu directly
+          return
+        }
         return
       }
-      const toolMap: Record<string, string> = { v: 'select', t: 'type', f: 'image', m: 'rect', l: 'ellipse', h: 'hand', z: 'zoom' }
-      if (toolMap[e.key.toLowerCase()]) { set({ tool: toolMap[e.key.toLowerCase()] }); return }
       if ((e.key === 'Delete' || e.key === 'Backspace') && freeElPageKey && selectedFreeIds.length > 0) {
         e.preventDefault()
         deleteFreeEls(freeElPageKey, selectedFreeIds)
+        return
       }
+      // Arrow key nudge
+      if (freeElPageKey && selectedFreeIds.length > 0 && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
+        e.preventDefault()
+        const step = e.shiftKey ? 2 : 0.5
+        const els = pageElements[freeElPageKey] ?? []
+        const moves = els
+          .filter((el) => selectedFreeIds.includes(el.id) && !el.locked)
+          .map((el) => ({
+            id: el.id,
+            x: Math.max(0, Math.min(90, el.x + (e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0))),
+            y: Math.max(0, Math.min(90, el.y + (e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0))),
+          }))
+        if (moves.length) moveFreeEls(freeElPageKey, moves)
+        return
+      }
+      const toolMap: Record<string, string> = { v: 'select', t: 'type', f: 'image', m: 'rect', l: 'ellipse' }
+      if (toolMap[e.key.toLowerCase()]) set({ tool: toolMap[e.key.toLowerCase()] })
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [selectedFreeIds, freeElPageKey, undo, redo, set, deleteFreeEls])
+  }, [selectedFreeIds, freeElPageKey, pageElements, undo, redo, set, deleteFreeEls, moveFreeEls])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', fontFamily: "'Hanken Grotesk', sans-serif", background: '#FBF9F4' }}>
@@ -143,34 +165,6 @@ export default function Editor() {
 
       {/* Body */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
-        {/* Tool rail */}
-        <div style={{ width: 52, flex: 'none', background: '#211D17', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '12px 0', gap: 4 }}>
-          {TOOL_DEFS.map((td) => (
-            <button
-              key={td.k}
-              onClick={() => set({ tool: td.k })}
-              title={td.n}
-              style={{
-                width: 36, height: 36, borderRadius: 9, border: 'none', cursor: 'pointer',
-                background: tool === td.k ? accent : 'transparent',
-                color: tool === td.k ? '#fff' : '#9A9182',
-                fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontFamily: 'inherit',
-              }}
-            >
-              {td.g}
-            </button>
-          ))}
-
-          {/* Spacer + accent dot */}
-          <div style={{ flex: 1 }} />
-          <div
-            style={{ width: 22, height: 22, borderRadius: '50%', background: accent, border: '2px solid rgba(255,255,255,.2)', cursor: 'pointer', marginBottom: 8 }}
-            title="Accent color"
-            onClick={() => set({ selected: null })}
-          />
-        </div>
-
         {/* Context toolbar — floats above canvas when free element is selected */}
         <ContextBar />
 

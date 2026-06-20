@@ -16,11 +16,14 @@ export interface FreeElement {
   bold: boolean
   italic: boolean
   fontColor: string
+  fontFamily?: string
   textAlign: 'left' | 'center' | 'right'
+  direction?: 'ltr' | 'rtl'
   imageUrl: string
   fit: 'cover' | 'contain' | 'fill'
   zIndex: number
   groupId: string | null
+  locked?: boolean
 }
 
 export type Screen = 'upload' | 'pricing' | 'signin' | 'signup' | 'projects' | 'processing' | 'editor' | 'csvUpload'
