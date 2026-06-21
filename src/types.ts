@@ -26,8 +26,8 @@ export interface FreeElement {
   locked?: boolean
 }
 
-export type Screen = 'upload' | 'pricing' | 'signin' | 'signup' | 'projects' | 'processing' | 'editor' | 'csvUpload'
-export type Template = 'promo' | 'mega' | 'clean' | 'bomb' | 'spec' | 'custom'
+export type Screen = 'upload' | 'pricing' | 'templates' | 'signin' | 'signup' | 'projects' | 'processing' | 'editor' | 'csvUpload'
+export type Template = 'promo' | 'mega' | 'clean' | 'bomb' | 'spec' | 'custom' | 'dark' | 'neo' | 'pop'
 export type GridKey = '2x2' | '2x3' | '3x3' | '3x4' | '4x4'
 export type PageSize = 'a5' | 'a4' | 'a3' | 'letter' | 'square'
 export type Orientation = 'portrait' | 'landscape'

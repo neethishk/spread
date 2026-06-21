@@ -64,6 +64,7 @@ interface AppState {
   initAuth: () => void
   goHome: () => void
   goPricing: () => void
+  goTemplates: () => void
   goSignin: () => void
   goSignup: () => void
   toggleAuthMode: () => void
@@ -191,6 +192,7 @@ export const useStore = create<AppState>((set, get) => ({
 
   goHome: () => set({ screen: 'upload' }),
   goPricing: () => set({ screen: 'pricing' }),
+  goTemplates: () => set({ screen: 'templates' }),
   goSignin: () => set({ screen: 'signin' }),
   goSignup: () => set({ screen: 'signup' }),
   toggleAuthMode: () => set((s) => ({ screen: s.screen === 'signup' ? 'signin' : 'signup' })),

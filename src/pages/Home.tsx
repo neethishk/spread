@@ -4,8 +4,8 @@ import { useShallow } from 'zustand/react/shallow'
 const SOURCES = ['CSV', 'Excel', 'Shopify', 'Airtable', 'PIM feed']
 
 export default function Home() {
-  const { goHome, goPricing, goSignin, goSignup, goProjects, loggedIn, set } = useStore(useShallow((s) => ({
-    goHome: s.goHome, goPricing: s.goPricing, goSignin: s.goSignin, goSignup: s.goSignup,
+  const { goHome, goPricing, goTemplates, goSignin, goSignup, goProjects, loggedIn, set } = useStore(useShallow((s) => ({
+    goHome: s.goHome, goPricing: s.goPricing, goTemplates: s.goTemplates, goSignin: s.goSignin, goSignup: s.goSignup,
     goProjects: s.goProjects, loggedIn: s.loggedIn, set: s.set,
   })))
 
@@ -32,7 +32,7 @@ export default function Home() {
             <button onClick={goProjects} style={{ border: '1px solid #E0DACE', background: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, padding: '9px 16px', borderRadius: 999, color: '#211D17' }}>← My projects</button>
           ) : (
             <div className="sp-nav" style={{ display: 'flex', gap: 28, alignItems: 'center', fontSize: 14.5, color: '#6B645A' }}>
-              <span onClick={goPricing}>Templates</span>
+              <span onClick={goTemplates}>Templates</span>
               <span onClick={goPricing}>Pricing</span>
               <span onClick={goSignin}>Sign in</span>
               <span onClick={goSignup} style={{ background: '#211D17', color: '#F6F3ED', padding: '10px 18px', borderRadius: 999, fontWeight: 600 }}>Start free</span>

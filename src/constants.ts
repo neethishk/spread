@@ -50,6 +50,9 @@ export const DEFAULT_BANNERS: Record<Template, BannerDef> = {
   bomb:   { title: 'PRICE DROP',           sub: 'LIMITED TIME ONLY' },
   spec:   { title: 'BIG-TICKET BUYS',      sub: '0% EMI AVAILABLE' },
   custom: { title: 'YOUR SECTION',         sub: 'CUSTOM LAYOUT' },
+  dark:   { title: 'NIGHT DEALS',          sub: 'EXCLUSIVE OFFERS' },
+  neo:    { title: 'NEW ARRIVALS',         sub: 'SHARP PRICES' },
+  pop:    { title: 'FLASH SALE',           sub: 'TODAY ONLY' },
 }
 
 export const CATALOG_THEMES = [
@@ -67,6 +70,9 @@ export const TPL_DEFS = [
   { key: 'clean',  name: 'Low Price',   desc: 'Minimal, plain prices' },
   { key: 'bomb',   name: 'Price Drop',  desc: 'Tinted, price-forward' },
   { key: 'spec',   name: 'Big-Ticket',  desc: 'Specs + finance chips' },
+  { key: 'dark',   name: 'Night Mode',  desc: 'Dark cells, high contrast' },
+  { key: 'neo',    name: 'Neo Bold',    desc: 'Sharp corners, strong borders' },
+  { key: 'pop',    name: 'Pop & Flash', desc: 'Tinted + stripe, high energy' },
   { key: 'custom', name: 'Custom',      desc: 'Style each cell yourself' },
 ] as const
 

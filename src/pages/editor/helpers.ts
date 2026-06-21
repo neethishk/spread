@@ -57,7 +57,7 @@ export function gridTokens(gKey: GridKey, pageH: number, tpl: Template): GridTok
   const cols = g.cols, rows = g.rows
   const small = cols >= 4, mid = cols === 3
   const cellGap = small ? 8 : 11
-  const cellRadBase = tpl === 'clean' ? 6 : (small ? 9 : 13)
+  const cellRadBase = tpl === 'neo' ? 0 : tpl === 'clean' ? 6 : (small ? 9 : 13)
   return {
     gKey, cols, rows, perPage: cols * rows, small, mid, cellGap, cellRadBase,
     cellRowH: Math.max(96, Math.floor((pageH - 104 - (rows - 1) * cellGap) / rows)),
@@ -188,6 +188,12 @@ export function enrichItem(
   else if (tpl === 'clean') { border = '1px solid #F0ECE3'; usePill = false }
   else if (tpl === 'bomb') { cellBg = ac.soft; border = '1px solid ' + ac.border }
   else if (tpl === 'spec') { border = '2px solid ' + ac.border }
+  else if (tpl === 'dark') {
+    cellBg = '#1E1A13'; cellText = '#F0ECE2'; border = '1px solid #2A2520'
+    descCol = 'rgba(240,236,226,.6)'; imgBg = 'rgba(255,255,255,.06)'; strikeCol = 'rgba(240,236,226,.5)'
+  }
+  else if (tpl === 'neo') { border = '2px solid #211D17'; usePill = false }
+  else if (tpl === 'pop') { cellBg = ac.soft; border = '1px solid ' + ac.border; showTopStripe = true }
 
   if (ov.bg === 'white') cellBg = '#fff'
   else if (ov.bg === 'cream') cellBg = '#FBF6EC'
